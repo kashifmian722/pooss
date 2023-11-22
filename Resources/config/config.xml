@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>General Setting</title>
+        <input-field>
+            <name>heading</name>
+            <label>Heading on Login</label>
+            <label lang="de-DE">Heading on Login</label>
+            <helpText>This will be the primary heading on the login page</helpText>
+            <helpText lang="de-DE">This will be the primary heading on the login page</helpText>
+            <copyable>true</copyable>
+        </input-field>
+        
+    </card>
+</config>

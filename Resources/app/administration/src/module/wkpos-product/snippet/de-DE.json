@@ -1,0 +1,37 @@
+{
+    "wkpos-product": {
+        "general": {
+            "mainMenuItemGeneral": "POS-Produkt ",
+            "descriptionTextModule": "POS-Produkt hier verwalten",
+            "massPrintButtonText": "Massendruck-Barcode",
+            "massGenereateButtonText": "Massencode generieren"
+        },
+        "list": {
+            "columnImage": "Produktbild",
+            "columnName": "Produktname",
+            "columnBarcode": "Barcode",
+            "columnPrice": "Preis",
+            "columnStock": "Lager",
+            "columnOutlet": "--Outlet--",
+            "columnAssignedStock": "Lager zuordnen",
+            "columnAction": "Aktion",
+            "printButtonText": "Barcode drucken",
+            "assignButtonText": "Zuordnen",
+            "contextMenuView": "Aussicht",
+            "generateButtonText": "Barcode generieren",
+            "regenerateButtonText": "Barcode neu generieren",
+            "modalTitle": "Ordnen Sie Produkte dem Outlet zu",
+            "titleSaveSuccess": "Erfolg",
+            "textSelectOutlet": "Outlet",
+            "placeholderAssignStock": "Geben Sie die zuzuweisende Menge ein",
+            "titleSaveError": "Error",
+            "messageSelectProduct": "Wählen Sie mindestens ein Produkt aus, das zugewiesen werden soll",
+            "messageSelectOutlet": "Wählen Sie eine Steckdose",
+            "messageSaveError": "Die Produkte konnten nicht der Steckdose zugeordnet werden",
+            "messageAssignSuccess": "\"{count}\" Produkte wurden der Verkaufsstelle zugewiesen",
+            "messageSaveSuccess": "Produkt \"{name}\"  wurde der Steckdose zugewiesen",
+            "messageLowStock": "Produkt \"{name}\" hat nicht genug verfügbaren Bestand",
+            "messageBarcodeGenerate": "Barcode erfolgreich generiert"
+        }
+    }
+}

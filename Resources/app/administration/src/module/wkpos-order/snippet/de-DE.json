@@ -1,0 +1,18 @@
+{
+    "wkpos-order": {
+        "general": {
+            "mainMenuItemGeneral": "POS-Bestellung",
+            "descriptionTextModule": "POS-Bestellung hier verwalten",
+            "orderIcon": "default-shopping-paper-bag"
+        },
+        "list": {
+            "columnCustomer": "Kundin",
+            "columnOrderNumber": "Bestellnummer",
+            "columnTotal": "Gesamt",
+            "columnOrderStatus": "Bestellstatus",
+            "columnPaymentStatus": "Zahlungsstatus",
+            "columnUser": "Agentenname",
+            "messageEmpty": "Noch keine Bestellung hinzugefügt!"
+        }
+    }
+}

@@ -1,0 +1,68 @@
+<sw-page class="wkpos-outlet-detail">
+    <template slot="smart-bar-actions">
+        <sw-button :routerLink="{ name: 'wkpos.outlet.list' }">
+            {{ $t('wkpos-outlet.detail.cancelButtonText') }}
+        </sw-button>
+        <sw-button-process
+            :isLoading="isLoading"
+            :processSuccess="processSuccess"
+            variant="primary"
+            @process-finish="saveFinish"
+            @click="onClickSave">
+            {{ $t('wkpos-outlet.detail.saveButtonText') }}
+        </sw-button-process>
+    </template>
+
+    <template slot="content">
+        <sw-card-view>
+            <sw-card v-if="outlet" :isLoading="isLoading">
+                <sw-field 
+                :label="$t('wkpos-outlet.detail.labelName')" 
+                v-model="outlet.name" 
+                :error="outletNameError" 
+                :placeholder="$t('wkpos-outlet.detail.placeholderName')"
+                required></sw-field>
+
+                <sw-textarea-field type="textarea" :label="$t('wkpos-outlet.detail.labelAddress')" :error="outletAddressError" :placeholder="$t('wkpos-outlet.detail.placeholderAddress')" v-model="outlet.address" required></sw-textarea-field>
+                
+                <sw-field :label="$t('wkpos-outlet.detail.labelCity')" v-model="outlet.city" :error="outletCityError" :placeholder="$t('wkpos-outlet.detail.placeholderCity')" required></sw-field>
+                
+                {% block sw_wkpos_outlet_country_field %}
+                    <sw-entity-single-select 
+                        :label="$tc('wkpos-outlet.detail.labelCountry')"
+                        v-model="outlet.countryId"
+                        :error="outletCountryIdError"
+                        entity="country" required>
+                    </sw-entity-single-select>
+                    
+                {% endblock %}
+
+                <sw-field :label="$t('wkpos-outlet.detail.labelZipcode')" v-model="outlet.zipcode" :error="outletZipcodeError"  :placeholder="$t('wkpos-outlet.detail.placeholderZipcode')" required></sw-field>
+
+                {% block sw_wkpos_outlet_active %}
+                    <sw-description-list>
+                        {% block sw_wkpos_outlet_active_label %}
+                            <dt class="wkpos-outlet-detail__label">{{ $tc('wkpos-outlet.detail.labelActive') }}</dt>
+                        {% endblock %}
+
+                        {% block sw_wkpos_outlet_active_content %}
+                            <dd v-if="!outletEditMode" class="wkpos-outlet-detail__label-is-active">
+                                {{ $tc('wkpos-outlet.detail.contentActive', outlet.active) }}
+                            </dd>
+                        {% endblock %}
+
+                        {% block sw_wkpos_outlet_active_editor %}
+                            <dd v-else>
+                                <sw-checkbox-field v-model="outlet.active"
+                                                    class="wkpos-outlet-detail__checkbox-field"
+                                                    :label="$tc('wkpos-outlet.detail.contentActive', outlet.active)"
+                                                    size="small">
+                                </sw-checkbox-field>
+                            </dd>
+                        {% endblock %}
+                    </sw-description-list>
+                {% endblock %}
+            </sw-card>
+        </sw-card-view>
+    </template>
+</sw-page>

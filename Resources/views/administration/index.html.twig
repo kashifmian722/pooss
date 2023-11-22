@@ -1,0 +1,10 @@
+{% sw_extends 'administration/index.html.twig' %}
+
+{% block administration_scripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ asset('bundles/webkulpos/administration/js/webkul-pos.js') }}"></script>
+{% endblock %}
+
+{% block administration_stylesheets %}
+    <link rel="stylesheet" href="{{ asset('bundles/webkulpos/administration/css/webkul-pos.css') }}?{{ 'now'|date('U') }}">
+{% endblock %}

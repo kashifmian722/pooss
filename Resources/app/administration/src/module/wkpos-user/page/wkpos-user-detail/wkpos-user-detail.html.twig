@@ -1,0 +1,195 @@
+{% block wkpos_user_detail %}
+    <sw-page class="wkpos-user-detail">
+        <template slot="smart-bar-actions">
+            <sw-button :routerLink="{ name: 'wkpos.user.list' }">
+                {{ $t('wkpos-user.detail.cancelButtonText') }}
+            </sw-button>
+            {% block wkpos_user_detail_actions_save %}
+                <sw-button-process
+                    class="sw-settings-user-detail__save-action"
+                    :isLoading="isLoading"
+                    :processSuccess="isSaveSuccessful"
+                    :disabled="isLoading || isError"
+                    variant="primary"
+                    @process-finish="saveFinish"
+                    @click="onClickSave">
+                    {{ $tc('wkpos-user.detail.saveButtonText') }}
+                </sw-button-process>
+            {% endblock %}
+        </template>
+        <template slot="content">
+            <sw-card-view>
+                <sw-card v-if="user" :isLoading="isLoading">
+                    {% block sw_wkpos_user_username_field %}
+                        <sw-field 
+                            :label="$t('wkpos-user.detail.labelUsername')"
+                            v-model="user.username"
+                            :placeholder="$t('wkpos-user.detail.placeholderUsername')"
+                            :error="userUsernameError"
+                            @change="checkUsername"
+                            required></sw-field>
+                    {% endblock %}
+                    {% block sw_wkpos_user_outlet_field %}
+                        <sw-field type="select"
+                                :label="$tc('wkpos-user.detail.labelOutlet')"
+                                v-model="user.outletId"
+                                :error="userOutletIdError"
+                                required>
+                            {% block sw_wkpos_user_outlet_field_options %}
+                                <option v-for="outlet in outlets" :key="outlet.id" :value="outlet.id">
+                                    {{ outlet.name }}
+                                </option>
+                            {% endblock %}
+                        </sw-field>
+                    {% endblock %}
+                    {% block sw_wkpos_user_firstname_field %}
+                        <sw-field 
+                            :label="$t('wkpos-user.detail.labelFirstName')"
+                            v-model="user.firstName"
+                            :placeholder="$t('wkpos-user.detail.placeholderFirstName')"
+                            :error="userFirstNameError"
+                            required></sw-field>
+                    {% endblock %}
+                    {% block sw_wkpos_user_lastname_field %}
+                        <sw-field 
+                            :label="$t('wkpos-user.detail.labelLastName')"
+                            v-model="user.lastName"
+                            :placeholder="$t('wkpos-user.detail.placeholderLastName')"
+                            :error="userLastNameError"
+                            required></sw-field>
+                    {% endblock %}
+                    {% block sw_wkpos_user_email_field %}
+                        <sw-field
+                            :label="$t('wkpos-user.detail.labelEmail')"
+                            v-model="user.email"
+                            :placeholder="$t('wkpos-user.detail.placeholderEmail')"
+                            :error="userEmailError"
+                            @change="checkEmail"
+                            required></sw-field>
+                    {% endblock %}
+                    {% block wkpos_user_index_image_card %}
+                        <sw-card class="sw-profile__card"
+                                    :title="$tc('wkpos-user.detail.titleImageCard')"
+                                    :isLoading="isUserLoading">
+                            {% block wkpos_user_index_image_card_image %}
+                                <sw-upload-listener
+                                    :uploadTag="uploadTag"
+                                    autoUpload
+                                    @media-upload-finish="setMediaItem">
+                                </sw-upload-listener>
+                                <sw-media-upload-v2
+                                    :uploadTag="uploadTag"
+                                    :source="avatarMediaItem"
+                                    class="sw-profile-index__user-image-upload"
+                                    :allowMultiSelect="false"
+                                    variant="regular"
+                                    :label="$tc('wkpos-user.detail.labelUploadAvatar')"
+                                    :defaultFolder="userRepository.schema.entity"
+                                    @media-drop="onDropMedia"
+                                    @media-upload-sidebar-open="openMediaSidebar"
+                                    @media-upload-remove-image="onUnlinkAvatar"
+                                    fileAccept="jpeg">
+                                </sw-media-upload-v2>
+                            {% endblock %}
+                        </sw-card>
+                    {% endblock %}
+
+                    {% block wkpos_user_detail_content_password %}
+                        <sw-password-field
+                            class="sw-settings-user-detail__grid-password"
+                            :value="user.password"
+                            :label="$tc('wkpos-user.detail.labelPassword')"
+                            :passwordToggleAble="false"
+                            :copyAble="false"
+                            :error="userPasswordError"
+                            :disabled="true" required>
+                        </sw-password-field>
+                    {% endblock %}
+                    {% block wkpos_user_detail_grid_change_password %}
+                        <a v-if="user.id" class="sw-settings-user-detail__grid-change-password"
+                        @click="onChangePassword">
+                            {{ $tc('wkpos-user.detail.labelChangePassword') }}
+                        </a>
+                    {% endblock %}
+                
+                    {% block wkpos_user_detail_content_password_modal %}
+                        <sw-modal v-if="changePasswordModal"
+                                    @modal-close="onClosePasswordModal"
+                                    :title="$tc('wkpos-user.detail.labelNewPassword')"
+                                    variant="small">
+                            {{ $tc('wkpos-user.detail.textChangePassword') }}
+
+                            {% block wkpos_user_detail_content_password_modal_input %}
+                                <sw-password-field
+                                    class="wkpos-user-detail__new-password"
+                                    v-model="newPassword"
+                                    :passwordToggleAble="true"
+                                    :copyAble="false"
+                                    :placeholder="$tc('wkpos-user.detail.placeholderNewPassword')">
+                                </sw-password-field>
+                            {% endblock %}
+
+                            {% block wkpos_user_detail_password_modal_footer %}
+                                <template #modal-footer>
+                                    {% block wkpos_user_detail_password_modal_actions_cancel %}
+                                        <sw-button @click="onClosePasswordModal"
+                                                    size="small">
+                                            {{ $tc('wkpos-user.detail.labelButtonCancel') }}
+                                        </sw-button>
+                                    {% endblock %}
+
+                                    {% block wkpos_user_detail_password_modal_actions_change %}
+                                        <sw-button @click="onSubmit"
+                                                    variant="primary"
+                                                    size="small"
+                                                    :disabled="disableConfirm">
+                                            {{ $tc('wkpos-user.detail.labelButtonChangePassword') }}
+                                        </sw-button>
+                                    {% endblock %}
+                                </template>
+                            {% endblock %}
+                        </sw-modal>
+                    {% endblock %}
+
+                    {% block sw_wkpos_outlet_active %}
+                        <sw-description-list>
+                            {% block sw_wkpos_user_active_label %}
+                                <dt class="wkpos-user-detail__label">{{ $tc('wkpos-user.detail.labelActive') }}</dt>
+                            {% endblock %}
+
+                            {% block sw_wkpos_user_active_content %}
+                                <dd v-if="!userEditMode" class="wkpos-user-detail__label-is-active">
+                                    {{ $tc('wkpos-user.detail.contentActive', user.active) }}
+                                </dd>
+                            {% endblock %}
+
+                            {% block sw_wkpos_user_active_editor %}
+                                <dd v-else>
+                                    <sw-checkbox-field v-model="user.active"
+                                                        class="wkpos-user-detail__checkbox-field"
+                                                        :label="$tc('wkpos-user.detail.contentActive', user.active)"
+                                                        size="small">
+                                    </sw-checkbox-field>
+                                </dd>
+                            {% endblock %}
+                        </sw-description-list>
+                    {% endblock %}
+                </sw-card>
+            </sw-card-view>
+        </template>
+        {% block wkpos_user_index_sidebar %}
+                <template #sidebar>
+                    <sw-sidebar :propagateWidth="true" >
+                        <sw-sidebar-media-item ref="mediaSidebarItem"
+                                            :isParentLoading="isUserLoading">
+                            <template #context-menu-items="media">
+                                <sw-context-menu-item @click="setMediaFromSidebar(media.mediaItem)">
+                                    {{ $tc('wkpos-user.detail.labelUseAsAvatar') }}
+                                </sw-context-menu-item>
+                            </template>
+                        </sw-sidebar-media-item>
+                    </sw-sidebar>
+                </template>
+            {% endblock %}
+    </sw-page>
+{% endblock %}

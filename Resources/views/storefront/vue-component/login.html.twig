@@ -1,0 +1,113 @@
+<template id="wkpos-login-template">
+    <div class="wkpos-login" v-bind:style="{display: loginDisplay}" style="display: {% if user %}none{% else %}block{% endif %};">
+        <div class="login-box">
+        <div class="login-header">
+            <p>{{"wkpos.general.welcomeText"|trans}} </p>
+            <h3>{{ config.heading }}</h3>
+        </div>
+        <div class="login-content">
+            <p>{{"wkpos.general.loginTitle"|trans}}</p>
+            <div class="login-form">
+                <div class="form-group">
+                <label for="login-username">{{"wkpos.general.labelUsername"|trans}}</label>
+                <input type="text" v-model="username" name="username" class="form-control" id="login-username" placeholder="Enter Username" v-on:keypress.enter="posLogin()" ref="user-ref">
+                </div>
+                <div class="form-group">
+                <label for="login-password">{{"wkpos.general.labelPassword"|trans}}</label>
+                <input v-model="password" type="password" class="form-control" name="password" id="login-password" placeholder="Enter Password" v-on:keypress.enter="posLogin()">
+                </div>
+                <div class="form-group">
+                <button type="button" title="{{"wkpos.general.loginText"|trans}}" class="btn wkpos-btn" @click="posLogin">{{"wkpos.general.loginText"|trans}}</button>
+                </div>
+            </div>
+        </div>
+        <div class="login-footer">
+            <h4>{{"wkpos.general.pos"|trans}}</h4>
+            <p>{{"wkpos.general.loginFooterText"|trans}}</p>
+        </div>
+        </div>
+    </div>
+</template>
+<script>
+    Vue.component('wkpos-login',{
+        template: '#wkpos-login-template',
+        props: ['hostname','user','containerDisplay','posProducts'],
+        data: function () {
+            return {
+                loginDisplay: 'block',
+                username: null,
+                password: null,
+
+            }
+        },
+        mounted() {
+            this.$refs['user-ref'].focus();
+        },
+        methods: {
+            posLogin() {
+                if(!this.username || !this.password) {
+                  this.$toast.error('{{"wkpos.detail.warningText"|trans}}: {{"wkpos.detail.loginErrorMessage"|trans}}', {
+                      position: 'top'
+                    });
+                    return false;
+                }
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+
+                if (this.wrongCount == 4) {
+                  this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + '{{"wkpos.detail.wrongAttempt"|trans}}', {
+                        position: 'top'
+                  });
+                  axios.post(this.hostname + '/wkpos/wrong/attempt', {
+                    username: this.username
+                  }).then(response => {
+                    if (response.data.error) {
+                      loader.hide();
+                      return false;  
+                    } else {
+                      this.wrongCount = 0;
+                      loader.hide();
+                      return false;  
+                    }          
+                  });               
+                  
+                } else {
+                  axios.post(this.hostname + '/wkpos/login', {
+                    username: this.username,
+                    password: this.password
+                  }).then(response => {
+                    if (response.data.errorCount > 0) {
+                      this.wrongCount = this.wrongCount + 1;
+                      if(response.data.message ==  '') {
+                        this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + '{{"wkpos.detail.wrongAttempt"|trans}}', {
+                          position: 'top'
+                        });
+                      } else {
+                        this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + response.data.message, {
+                          position: 'top'
+                        });
+                      }
+                      loader.hide();
+                      return false;
+                    }
+
+                    this.user = response.data.user;
+                    this.loginDisplay = 'none';
+                    this.containerDisplay = 'block';
+                    this.loadCustomers();
+                    this.loadProducts();
+                    this.loadOrders();
+                    this.loadCurrencies();
+                    loader.hide();
+                    this.posProducts = this.products;
+                  })
+                  .catch(error => {
+
+                  });
+                }
+              },
+        }
+    })
+</script>

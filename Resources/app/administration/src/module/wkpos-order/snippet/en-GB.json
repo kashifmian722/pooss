@@ -1,0 +1,19 @@
+{
+    "wkpos-order": {
+        "general": {
+            "mainMenuItemGeneral": "POS Order",
+            "descriptionTextModule": "Manage POS Order Here",
+            "orderIcon": "default-shopping-paper-bag"
+        },
+        "list": {
+            "columnCustomer": "Customer Name",
+            "columnOutlet": "Outlet",
+            "columnOrderNumber": "Order Number",
+            "columnTotal": "Total",
+            "columnOrderStatus": "Order Status",
+            "columnPaymentStatus": "Payment Status",
+            "columnUser": "Agent Name",
+            "messageEmpty": "No order added yet!"
+        }
+    }
+}

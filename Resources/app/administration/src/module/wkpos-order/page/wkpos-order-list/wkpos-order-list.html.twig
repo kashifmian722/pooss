@@ -1,0 +1,101 @@
+{% block wkpos_order_list %}
+    <sw-page class="wkpos-order-list">
+        {% block wkpos_order_list_smart_bar_header %}
+            <template #smart-bar-header>
+                <h2>
+                    {% block wkpos_order_list_smart_bar_header_title_text %}
+                        {{ $tc('sw-settings.index.title') }}
+                        <sw-icon name="small-arrow-medium-right" small>
+                        </sw-icon>
+                        {{ $tc('wkpos-order.general.mainMenuItemGeneral') }}
+                    {% endblock %}
+
+                    {% block wkpos_order_list_smart_bar_header_amount %}
+                        <span v-if="!isLoading" class="sw-page__smart-bar-amount">
+                            ({{ total }})
+                        </span>
+                    {% endblock %}
+                </h2>
+            </template>
+        {% endblock %}
+      {% block wkpos_order_list_content %}
+        <template slot="content">
+            {% block wkpos_order_list_content_slot %}
+            <div class="wkpos-order-list__content">
+              {% block wkpos_order_list_grid %}
+                <sw-entity-listing :dataSource="orders"
+                          :columns="columns"
+                          :showSelection="false"
+                          :repository="repository"
+                          :isLoading="isLoading"
+                          :allowColumnEdit="false"
+                          identifier="wkpos-order-list">
+                    {% block wkpos_order_list_grid_columns_order_number %}
+                        <template slot="column-order.orderNumber" slot-scope="{ item }">
+                            <sw-context-menu-item class="sw-order-list__order-view-action" :routerLink="{ name: 'sw.order.detail', params: { id: item.order.id } }">{{ item.order.orderNumber }} </sw-context-menu-item>
+                        </template>
+                    {% endblock %}
+                    {% block wkpos_order_list_grid_columns %}                        
+                        {% block wkpos_order_list_grid_columns_agent %}
+                            <template slot="column-userName" slot-scope="{ item }">
+                                {{ item.userName }}
+                            </template>
+                        {% endblock %}
+                    {% endblock %}
+                    {% block wkpos_order_list_grid_columns_customer_name %}
+                        <template slot="column-order.orderCustomer.firstName" slot-scope="{ item }">
+                            {{ item.order.orderCustomer.firstName }} {{ item.order.orderCustomer.lastName }}
+                        </template>
+                    {% endblock %}
+                    {% block wkpos_order_list_grid_columns_amount %}
+                        <template slot="column-order.amountTotal" slot-scope="{ item }">
+                            {{ item.order.amountTotal | currency(item.order.currency.shortName) }}
+                        </template>
+                    {% endblock %}
+                    {% block sw_order_list_grid_columns_state %}
+                        <template slot="column-order.stateMachineState.name" slot-scope="{ item }">
+                            <sw-label :variant="getVariantFromOrderState(item.order)" appearance="pill">
+                                {{ item.order.stateMachineState.translated.name }}
+                            </sw-label>
+                        </template>
+                    {% endblock %}
+
+                    {% block sw_order_list_grid_columns_transaction_state %}
+                        <template slot="column-order.transactions[0].stateMachineState.name" slot-scope="{ item }">
+                            <sw-label :variant="getVariantFromPaymentState(item.order)" appearance="pill">
+                                {{ item.order.transactions[0].stateMachineState.name }}
+                            </sw-label>
+                        </template>
+                    {% endblock %}
+
+                    {% block sw_order_list_grid_columns_actions %}
+                        <template slot="actions" slot-scope="{ item }">
+                            {% block sw_customer_list_grid_columns_actions_view %}
+                                <sw-context-menu-item class="sw-order-list__order-view-action" :routerLink="{ name: 'sw.order.detail', params: { id: item.order.id } }">
+                                    {{ $tc('sw-order.list.contextMenuView') }}
+                                </sw-context-menu-item>
+                            {% endblock %}
+                        </template>
+                    {% endblock %}
+                    <template #pagination>
+                        {% block wk__list_grid_pagination %}
+                            <sw-pagination :page="page"
+                                            :limit="limit"
+                                            :total="total"
+                                            :total-visible="10"
+                                            @page-change="onPageChange">
+                            </sw-pagination>
+                        {% endblock %}
+                    </template>
+                    
+                </sw-entity-listing>
+              {% endblock %}
+            </div>
+            {% block wkpos_order_list_empty_state %}
+                <sw-empty-state v-if="!isLoading && !total" :title="$tc('wkpos-order.list.messageEmpty')" :icon="$tc('wkpos-order.general.orderIcon')"></sw-empty-state>
+            {% endblock %}
+            {% endblock %}
+        </template>
+      {% endblock %}
+    </sw-page>
+{% endblock %}

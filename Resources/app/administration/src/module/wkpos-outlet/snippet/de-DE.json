@@ -1,0 +1,53 @@
+{
+    "wkpos-outlet": {
+        "adminMenu": "Kasse",
+        "general": {
+            "mainMenuItemGeneral": "POS-Auslauf",
+            "descriptionTextModule": "Outlet hier verwalten",
+            "labelOutletList": "Outlet"
+        },
+        "list": {
+            "addButtonText": "Outlet hinzufügen",
+            "columnName": "Outlet Name",
+            "columnAddress": "Ausgangsadresse",
+            "columnActive": "Aktiver Status",
+            "messageEmpty": "Noch keine Steckdose hinzugefügt!"
+        },
+        "detail": {
+            "tabGeneral": "Allgemeines",
+            "tabProduct": "Produkt",
+            "labelName": "Outlet Name",
+            "placeholderName": "Geben Sie den Outlet-Namen ein",
+            "labelAddress": "Ausgangsadresse",
+            "placeholderAddress": "Geben Sie die Outlet-Adresse ein",
+            "labelCountry": "Outlet Country",
+            "labelZone": "Ausgangszustand / Region",
+            "labelCity": "Stadt",
+            "placeholderCity": "Stadt betreten",
+            "labelZipcode": "Postleitzahl",
+            "placeholderZipcode": "Postleitzahl eingeben",
+            "labelActive": "Aktiver Status",
+            "contentActive": "Aktiv | Inaktiv",
+            "cancelButtonText": "Stornieren",
+            "saveButtonText": "speichern",
+            "errorTitle": "Fehler beim Speichern der Steckdose",
+            "errorMessage": "Bitte füllen Sie alle geforderten Felder aus",
+            "activeText": "Aktiv",
+            "inActiveText": "Inaktiv",
+            "outletCountryIdError": "Länder konnten nicht geladen werden",
+            "textSuccessTitle": "Erfolg",
+            "textSuccessMessage": "Die Steckdose wurde gespeichert  "
+        },
+        "product": {
+            "columnName": "Name",
+            "columnNumber": "Nummer",
+            "columnActive": "Aktiv",
+            "columnInStock": "Auf Lager",
+            "columnAvailableStock": "Verfügbar",
+            "columnAssignedStock": "Lager zuordnen",
+            "columnAction": "POS-Status",
+            "textStatusEnabled": "aktiviert",
+            "textStatusDisabled": "Behindert"
+        }
+    }
+}

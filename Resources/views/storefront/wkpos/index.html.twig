@@ -1,0 +1,1940 @@
+{# Set variable to "true" to enable HMR (hot page reloading) mode #}
+{% set isHMRMode = false %}
+
+{% block wkpos_base_doctype %}
+<!DOCTYPE html>
+{% endblock %}
+
+{% block wkpos_base_html %}
+<html lang="{{ "meta.xmlLang"|trans }}"
+      itemscope="itemscope"
+      itemtype="http://schema.org/WebPage">
+{% endblock %}
+
+{% block wkpos_base_head %}
+    {% sw_include '@Storefront/storefront/layout/meta.html.twig' %}
+{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3/dist/vue-loading.css" rel="stylesheet">
+  {% sw_include '@WebkulPOS/storefront/wkpos/style.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-toast-notification@0.6.2/dist/index.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vue-toast-notification/dist/theme-default.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue-idb@0.2.0/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3"></script>
+{% endblock %}
+
+{% block wkpos_base_body %}
+    <body class="is-ctl-{{ controllerName|lower }} is-act-{{ controllerAction|lower }}">
+    {% block base_noscript %}
+        <noscript class="noscript-main">
+            {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+                type: 'info',
+                content: 'general.noscriptNotice'|trans
+            } %}
+        </noscript>
+    {% endblock %}
+    <div id="app">
+        <div class="wkpos-login" v-bind:style="{display: loginDisplay}" style="display: {% if user %}none{% else %}block{% endif %};">
+          <div class="login-box">
+            <div class="login-header">
+              <p>{{"wkpos.general.welcomeText"|trans}} </p>
+              <h3>{{ config.heading }}</h3>
+            </div>
+            <div class="login-content">
+                <p>{{"wkpos.general.loginTitle"|trans}}</p>
+                <div class="login-form">
+                  <div class="form-group">
+                    <label for="login-username">Username / Email</label>
+                    <input type="text" v-model="username" name="username" class="form-control" id="login-username" placeholder="Enter Username" v-on:keypress.enter="posLogin()" ref="user-ref">
+                  </div>
+                  <div class="form-group">
+                    <label for="login-password">{{"wkpos.general.labelPassword"|trans}}</label>
+                    <input v-model="password" type="password" class="form-control" name="password" id="login-password" placeholder="Enter Password" v-on:keypress.enter="posLogin()">
+                  </div>
+                  <div class="form-group">
+                    <button type="button" title="{{"wkpos.general.loginText"|trans}}" class="btn wkpos-btn" @click="posLogin">{{"wkpos.general.loginText"|trans}}</button>
+                  </div>
+                </div>
+            </div>
+            <div class="login-footer">
+              <h4>{{"wkpos.general.pos"|trans}}</h4>
+              <p>{{"wkpos.general.loginFooterText"|trans}}</p>
+            </div>
+          </div>
+        </div>
+        <!-- POS Login Ended -->
+        <!-- Sidebar Starts -->
+          <div class="sidebar" id="sidebar">
+            <a href="javascript:void(0)" class="closebtn" @click="closeNav">×</a>
+            <div class="pos-user">
+              <div class="user-avatar">
+                <img :src="user.avatar" :alt="user.name" onerror="this.src=`${'{{ app.request.getSchemeAndHttpHost() }}{{ app.request.baseUrl }}'}/bundles/webkulpos/img/default.svg`">
+                <label class="cashier-label">{{"wkpos.detail.cashierTitle"|trans}}</label>
+                <label class="cashier-name"> $(user.name)</label>
+              </div>
+            </div> <!-- User -->
+            
+              <div @click="togglePanel('Home')" title="{{"wkpos.menu.home"|trans}}" class="pos-sidebar-menu-item active" ref="menuHome">
+                <i class="fa fa-home fa-2x sidebar-menu-icon" aria-hidden="true"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.menu.home"|trans}}</label>
+              </div>
+              <div @click="togglePanel('Checkout')" title="{{"wkpos.menu.checkout"|trans}}" class="pos-sidebar-menu-item" ref="menuCheckout">
+                <i class="fa fa-calculator fa-2x sidebar-menu-icon" aria-hidden="true"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.menu.checkout"|trans}}</label>
+              </div>
+              <div @click="togglePanel('Sale')" title="{{"wkpos.menu.sales"|trans}}" class="pos-sidebar-menu-item" ref="menuSale">
+                <i class="fa fa-file-text fa-2x sidebar-menu-icon" aria-hidden="true"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.menu.sales"|trans}}</label>
+              </div>
+              <div @click="togglePanel('Customer')" title="{{"wkpos.menu.customer"|trans}}" class="pos-sidebar-menu-item" ref="menuCustomer">
+                <i class="fa fa-user-circle-o fa-2x sidebar-menu-icon" aria-hidden="true"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.menu.customer"|trans}}</label>
+              </div>
+              <div @click="togglePanel('Profile')" title="{{"wkpos.menu.profile"|trans}}" class="pos-sidebar-menu-item" ref="menuProfile">
+                <i class="fa fa-user-circle fa-2x sidebar-menu-icon"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.menu.profile"|trans}}</label>
+              </div>
+              <div  @click="logout" class="pos-sidebar-menu-item" title="{{"wkpos.detail.logoutTitle"|trans}}">
+                <i class="fa fa-sign-out fa-2x sidebar-menu-icon"></i>
+                <label class="drawer-menu-item-label">{{"wkpos.detail.logoutTitle"|trans}}</label>
+                {# <label class="switch sidebar-menu-icon">
+                  <input type="checkbox" id="mode-checkbox" checked @click="switchPosMode">
+                  <span class="slider round"></span>
+                </label>
+                <label class="drawer-menu-item-label" id="pos-mode-text">Online</label> #}
+              </div>
+            
+          </div>  <!-- Sidebar Ends -->
+        
+        <div class="pos-container"  v-bind:style="{display: containerDisplay}" id="posContainer">
+          <div class="container-header">
+            <div class="pos-header pos-top-heading" @click="openNav" id="hamburgMenu">
+              <button class="" >&#9776;</button>
+            </div>
+            <div class="pos-header pos-home" @click="togglePanel('Home')" id="homeMenu">
+              <i class="fa fa-home fa-2x sidebar-menu-icon" aria-hidden="true"></i>
+            </div> 
+            
+            <div class="pos-header pos-heading-search" id="searchBar">
+              <i class="fa fa-search"></i>
+              <input type="text" name="search" placeholder="{{"wkpos.detail.searchPlaceholder"|trans}}" v-on:keyup="searchProduct($event)">
+              
+            </div> <!-- Heading Search -->
+            <div class="button-cart pull-right nav-item" title="{{"wkpos.detail.cartTitle"|trans}}" @click="openCart">
+              
+              <i class="fa fa-shopping-cart fa-2x cursor"><span class="cart-counter">$(cartCount)</span></i>
+            </div>
+            <div class="button-scan pull-right nav-item"  title="{{"wkpos.detail.barcodeScanTitle"|trans}}"   data-toggle="modal" data-target="#barcode-model" data-backdrop="static" @click="showBarcodeModel">
+              <i class="fa fa-qrcode fa-2x cursor" ></i>
+              
+            </div>
+            <div class="button-signal pull-right nav-item" title="{{"wkpos.detail.networkTitle"|trans}}" @click="switchPosMode" >
+              <i class="fa fa-wifi fa-2x network-on-signal" aria-hidden="true" id="networkIcon"></i>
+            </div>
+            
+            
+          </div>  <!-- Container Header -->
+          <!-- Barcode Modal-->
+          <div class="modal"
+            id="barcode-model"
+            tabindex="-1"
+            role="dialog" style="display:none">
+            <div class="modal-dialog modal-md modal-dialog-scrollable modal-dialog-centered "
+                role="document">
+                <div class="modal-content">
+                  <div class="modal-header ">
+                    <div class="modal-title h5">
+                       {{"wkpos.detail.scanBarcodeTitle"|trans}}
+                    </div>
+                     <span class="close" @click="closeBarcodeModal">&times;</span>
+                  </div>
+                  <div class="modal-body">
+                    <input type="text" class="form-control" v-model="barcodeValue" @keyup.enter="enterBarcode" placeholder="Enter the barcode"/>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-info" @click="closeBarcodeModal" title="{{"wkpos.detail.closeButtonText"|trans}}">{{"wkpos.detail.closeButtonText"|trans}}</button>
+                  </div>
+                </div>
+            </div>
+          </div>
+          <!-- close barcode modal-->
+          
+          
+          
+          <div class="pos-content" ref="pos-content" id="pos-content">
+
+            <!-- category Modal -->
+                <div id="categoryList" class="modal" role="dialog" style="display: none;">
+
+                  <!-- Modal content -->
+                  <div class="modal-dialog modal-dialog-scrollable"
+                    role="dialog">
+                    <div class="modal-content">
+                      <div class="modal-header ">
+                        <div class="modal-title h5">
+                            {{"wkpos.detail.categoryModalTitle"|trans}}
+                        </div>
+                        <span class="close" @click="closeCategoryModal">&times;</span>
+                      </div>
+                      <div class="modal-body">
+                        <div class="category-list" v-for="category in categories">
+                          <label class="category-label" :id="'label-'+category.id" @click="onClickCategory(category.id)" style="cursor:pointer">$(category.name)</label>
+                          <button class="btn btn-primary btn-xs">
+                          <i class="fa fa-plus" :id="'plusicon-'+category.id" @click="openSubCategory(category.id)"></i>
+                          <i class="fa fa-minus" :id="'minusicon-'+category.id" @click="closeSubCategory(category.id)" style="display:none" ></i>
+                          </button> 
+                          </button>
+                          <div class="form-group sub-cat" :id="'subcat-'+category.id" style="display:none;margin-left:50px">
+                            <div v-for="subcat in category.children">
+                              <label class="category-label" :id="'label-'+subcat.id" style="cursor:pointer" @click="onClickCategory(subcat.id)">$(subcat.name)</label>
+                              
+                            </div>
+                          
+                          </div>
+                        </div>
+                        <div style="margin-top:8px"><button class="btn btn-primary" @click="loadProducts()">{{"wkpos.detail.showAllProductsButton"|trans}}</button></div>
+                      </div>
+                      <div class="modal-footer">
+                        <button class="btn btn-info" @click="closeCategoryModal" title="{{"wkpos.detail.closeButtonText"|trans}}">{{"wkpos.detail.closeButtonText"|trans}}</button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+            <!-- end category Modal -->
+            <!-- POS Main Content -->
+            <div class="pos-main-content" ref="pos-main-content">
+              <div class="panel product-panel" ref="panelHome">
+                <div v-if="posProducts.length" class="row cms-listing-row js-listing-wrapper" style="width:96%">
+                  <div class="cms-listing-col col-sm-6 col-lg-4 col-xl-3" v-for="(product, index) in posProducts" v-if="product.parentId == null" :key="product.productId" @click="addTocart(product.id)" @dblclick="productInfo(index);" style="margin-top:6px">
+                    <div class="card product-box box-standard">
+                      <div class="card-body cursor">
+                        
+                          <img v-if="product.image" v-bind:src="product.image" class="product-grid-image">
+                          <div v-else class="sw-product-image is--placeholder"><span class="sw-product-image__placeholder-icon sw-icon icon--default-object-image sw-icon--fill sw-icon--small"><svg xmlns="http://www.w3.org/2000/svg" width="112" height="100" viewBox="0 0 24 24"><path fill="#758CA3" fill-rule="evenodd" d="M2,20.4948007 L9.25259068,12.3356362 C9.63484734,11.9055974 10.300257,11.8860435 10.7071068,12.2928932 L12.7071068,14.2928932 C12.7218834,14.3076698 12.7361009,14.3227938 12.7497593,14.3382389 L15.2317787,11.3598156 C15.6082272,10.9080774 16.2913058,10.8770923 16.7071068,11.2928932 L22,16.5857864 L22,3 C22,2.44771525 21.5522847,2 21,2 L3,2 C2.44771525,2 2,2.44771525 2,3 L2,20.4948007 Z M3.33795495,22 L21,22 C21.5522847,22 22,21.5522847 22,21 L22,19.4142136 L16.0671984,13.4814119 L11.7682213,18.6401844 C11.4146572,19.0644613 10.7840925,19.1217854 10.3598156,18.7682213 C9.9355387,18.4146572 9.87821464,17.7840925 10.2317787,17.3598156 L11.4841592,15.856959 C11.4160067,15.8158633 11.351699,15.7659126 11.2928932,15.7071068 L10.0428168,14.4570304 L3.33795495,22 Z M3,0 L21,0 C22.6568542,1.3235398e-16 24,1.34314575 24,3 L24,21 C24,22.6568542 22.6568542,24 21,24 L3,24 C1.34314575,24 2.02906125e-16,22.6568542 3.94430453e-31,21 L3.94430453e-31,3 C-2.02906125e-16,1.34314575 1.34314575,1.1851685e-15 3,0 Z M7.5,11 C5.56700338,11 4,9.43299662 4,7.5 C4,5.56700338 5.56700338,4 7.5,4 C9.43299662,4 11,5.56700338 11,7.5 C11,9.43299662 9.43299662,11 7.5,11 Z M7.5,9 C8.32842712,9 9,8.32842712 9,7.5 C9,6.67157288 8.32842712,6 7.5,6 C6.67157288,6 6,6.67157288 6,7.5 C6,8.32842712 6.67157288,9 7.5,9 Z"></path></svg></span></div>
+                        
+                        
+                        <p>$(product.name)</p>
+                        <p>$(product.priceNetF)</p>
+                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else>
+                  {{"wkpos.detail.noProductFound"|trans}}
+                </div>
+              </div><!-- Product Panel -->
+               <!-- Variant Modal -->
+                <div id="myModal" class="modal"  tabindex="-1" role="dialog" style="display: none;  padding-left: 3px;">
+
+                  <!-- Modal content -->
+                  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered "
+                    role="document">
+                    <div class="modal-content">
+                      <div class="modal-header ">
+                        <div class="modal-title h5">
+                            {{"wkpos.general.variantModelHeading"|trans}}
+                        </div>
+                        <span class="close" @click="closeModal">&times;</span>
+                      </div>
+                      <div class="modal-body">
+                        <div data-product-detail-loader="true" class="product-table-body">
+                          <div class="product-wrapper">
+                            <div class="product-item-header">
+                              <div class="row" >
+                                <table class="table table-bordered" >
+                                 <thead>
+                                  <tr>
+                                  <th>{{"wkpos.products.variantColumn"|trans}}</th>
+                                  <th>{{"wkpos.products.priceColumn"|trans}}</th>
+                                  <th>{{"wkpos.products.actionColumn"|trans}}</th>
+                                  </tr>
+                                 </thead>
+                                 <tbody>
+                                  <tr v-for="(value, rowIteration) in variants">
+                                  <td>$(value.name)</td>
+                                  <td>$(currency.symbol)$(value.price)</td>
+                                  <td><button class="btn  btn-primary" @click="addTocart(value.id)">{{"wkpos.products.addtocartButton"|trans}}</button></td>
+                                  </tr>
+                                 </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                      </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button class="btn btn-info" @click="closeModal" title="{{"wkpos.detail.closeButtonText"|trans}}">{{"wkpos.detail.closeButtonText"|trans}}</button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              <!-- End Variant Modal -->
+              
+              <!-- Checkout Panel -->
+              <div class="panel checkout-panel" ref="panelCheckout">
+                <div class="panel-header active">
+                  <p class="cursor inline active" @click="togglePanel('Checkout')"><i class="fa fa-angle-double-left"></i>{{"wkpos.detail.backText"|trans}} </p>
+                  <span class="float-right inline closer active" @click="togglePanel('Checkout')" style="margin-right: 8px;">&times;</span>
+                </div>
+                <div class="panel-body">
+                  <div class="accept-payment">
+                    <h4 class="float-left inline payment-title">{{"wkpos.detail.paymentRemaining"|trans}}</h4>
+                    <h4 class="float-right inline payment-total active">$(grandTotal)</h4>
+                  </div>
+                  <hr>
+                  <div class="payment-details">
+                    <div class="payment-cash block">
+                      <div class="inline float-left">
+                        <p>{{"wkpos.detail.byCashLabel"|trans}}</p>
+                      </div>
+                      <div class="inline float-right">
+                        <div class="input-cash">
+                          <input type="text" v-model="paidCash" placeholder="{{"wkpos.detail.byCashPlaceHolder"|trans}}" v-on:keyup="calculatePayment($event, 'cash')" ref="paidCash">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="payment-card block">
+                      <div class="inline float-left">
+                        <p>{{"wkpos.detail.byCardLabel"|trans}}</p>
+                      </div>
+                      <div class="inline float-right">
+                        <div class="input-card">
+                          <input type="text" v-model="paidCard" placeholder="{{"wkpos.detail.byCardPlaceHolder"|trans}}" v-on:keyup="calculatePayment($event, 'card')">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="amount-received">
+                    <div class="payment-card block" style="border-top: 1px solid #E0E0E0; margin-top: 5px; padding-top: 5px;">
+                      <div class="inline float-left">
+                        <p>{{"wkpos.detail.receivedAmount"|trans}}</p>
+                      </div>
+                      <div class="inline float-right">
+                        $(receivedTotal)
+                      </div>
+                    </div>
+                  </div>
+                  <div class="amount-received" v-if="remainingAmount">
+                    <div class="payment-card block" style="border-top: 1px solid #E0E0E0; margin-top: 5px; padding-top: 5px;">
+                      <div class="inline float-left">
+                        <p>{{"wkpos.detail.remainingAmount"|trans}}</p>
+                      </div>
+                      <div class="inline float-right">
+                        $(remainingAmount)
+                      </div>
+                    </div>
+                  </div>
+                  <div class="amount-received checkout-customer">
+                    <textarea name="name" rows="3" cols="80" style="width: -webkit-fill-available;" placeholder="{{"wkpos.detail.orderNotePlaceHolder"|trans}}" v-model="orderNote">$(orderNote)</textarea>
+                  </div>
+                  <div class="amount-received checkout-customer">
+                    <button title="{{"wkpos.detail.acceptPaymentbutton"|trans}}" type="button" style="text-align: center;" @click="placeOrder();">{{"wkpos.detail.acceptPaymentbutton"|trans}}</button>
+                  </div>
+                </div>
+              </div> <!-- Checkout Panel -->
+
+                <!-- Sales Panel -->
+                <div class="panel sale-panel" ref="panelSale">
+                  <div class="panel-header">
+                    <p v-if="offlineOrders">{{"wkpos.detail.orderHistory"|trans}} ($(orders.length+offlineOrders.length)) 
+                    </p>
+                    <p v-else>{{"wkpos.detail.orderHistory"|trans}} ($(orders.length))</p>
+                    <span class="float-right inline closer active" @click="togglePanel('Sale')">&times;</span>
+                    <div class="wkorder cursor" ref="previous-tab"  @click="clickOrderTab('previous')">{{"wkpos.detail.previousText"|trans}}</div>
+                    <div class="wkorder cursor" ref="offline-tab"  @click="clickOrderTab('offline')">Offline</div>
+                  </div>
+                  <div class="panel-body" v-if="orders" id="previous">
+                      <div class="order-grid" v-for="(order, index) in orders" :key="index" @click="orderDetail(index)">
+                        <div class="order-detail">
+                          <div class="order-number">$(order.orderNumber)</div>
+                          <div class="datetimeorder">
+                            $(order.orderDate)
+                            <br>
+                            $(order.orderTime)
+                          </div>
+                        </div>
+                        <div class="customer-name">
+                          $(order.orderCustomer.firstName) $(order.orderCustomer.lastName)
+                        </div>
+                        <div class="order-total">
+                          <table>
+                            <tr>
+                              <th>{{"wkpos.detail.total"|trans}}</th>
+                              <th>$(order.currency.symbol)$(order.amountTotal)</th>
+                            </tr>
+                            <tr>
+                              <th>{{"wkpos.detail.status"|trans}}</th>
+                              <th>$(order.orderStatus)</th>
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                  </div>
+                  <div class="panel-body"  id="offline" style="display:none;">
+                    <div v-if="offlineOrders"><button class="btn btn-primary" @click="syncAllOrders">{{"wkpos.detail.syncOrderButton"|trans}}</button></div>
+                    <div v-else>{{"wkpos.detail.emptyOfflineOrderMessage"|trans}}</div>
+                      <div class="order-grid" v-for="(order, index) in offlineOrders" :key="index" @click="offlineOrderDetail(index)">
+                        <div class="order-detail">
+                          <div class="order-number">$(order.txnId)</div>
+                          <div class="datetimeorder">
+                            $(order.date)
+                            <br>
+                            $(order.time)
+                          </div>
+                        </div>
+                        <div class="customer-name">
+                          $(order.customer.name)
+                        </div>
+                        <div class="order-total">
+                          <table>
+                            <tr>
+                              <th>{{"wkpos.detail.total"|trans}}</th>
+                              <th>$(order.currency.symbol)$(order.grandTotal)</th>
+                            </tr>
+                            {# <tr>
+                              <th>{{"wkpos.detail.status"|trans}}</th>
+                              <th>$(order.orderStatus)</th>
+                            </tr> #}
+                          </table>
+                        </div>
+                      </div>
+                  </div>
+                </div><!-- Sale Panel Ended-->
+
+                <!-- Customer Panel -->
+                <div class="panel customer-panel" ref="panelCustomer">
+                  <div class="panel-header">
+                    <p>{{"wkpos.detail.customers"|trans}} ($(customers.length))<span class="float-right inline closer active" @click="togglePanel('Customer')">&times;</span></p>
+                  </div>
+                  <div class="panel-body">
+                    <div class="registration-panel" ref="registrationPanel">
+                      <span class="float-right cursor" style="font-size: 22px;" @click="toggleHorizontalPanel">&times;</span>
+                      <form>
+                        <div class="register-personal">
+                          <div class="form-row">
+                            <div class="form-group col-md-3 col-sm-6">
+                              <label class="form-label" for="input-salutation">{{"wkpos.detail.salutation"|trans}} *</label>
+                              <select class="custom-select" v-model="register.salutationId">
+                                <option v-for="item in salutations" :key="item.id" :value="item.id">$(item.displayName)</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="form-row">
+                            <div class="form-group col-sm-6">
+                              <label class="form-label" for="input-fistname">{{"wkpos.detail.firstName"|trans}}*</label>
+                              <input type="text" name="firstName" id="input-fistname" placeholder="{{"wkpos.detail.firstName"|trans}}*" class="form-control" v-model="register.firstName">
+                            </div>
+                            <div class="form-group col-sm-6">
+                              <label class="form-label" for="input-lastname">{{"wkpos.detail.lastName"|trans}}*</label>
+                              <input type="text" name="lastName" id="input-lastname" placeholder="{{"wkpos.detail.lastName"|trans}}*" class="form-control" v-model="register.lastName">
+                            </div>
+                          </div>
+                          <div class="form-row">
+                            <div class="form-group col-sm-6">
+                              <label class="form-label" for="input-email">{{"wkpos.detail.newEmailAddress"|trans}}*</label>
+                              <input type="text" name="email" id="input-email" placeholder="{{"wkpos.detail.newEmailAddress"|trans}}*" class="form-control" v-model="register.email">
+                            </div>
+                            <div class="form-group col-sm-6">
+                              <label class="form-label" for="input-password">{{"wkpos.detail.password"|trans}}*</label>
+                              <input type="password" name="password" id="input-password" placeholder="{{"wkpos.detail.password"|trans}}*" class="form-control" v-model="register.password">
+                              <small class="form-text text-muted">Your password must contain at least 8 characters.</small>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="register-address">
+                          <div class="register-billing">
+                            <div class="card-title">{{"wkpos.detail.addressDetails"|trans}}</div>
+                              <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                  <label class="form-label" for="input-street">{{"wkpos.detail.streetAddress"|trans}}*</label>
+                                  <input type="text" class="form-control" id="input-street" placeholder="{{"wkpos.detail.streetAddress"|trans}}*" v-model="register.street">
+                                </div>
+                                <div class="form-group col-sm-6">
+                                  <label class="form-label" for="input-zipcode">{{"wkpos.detail.zipCode"|trans}}*</label>
+                                  <input type="text" class="form-control" id="input-zipcode" placeholder="{{"wkpos.detail.zipCode"|trans}}*" v-model="register.zipcode">
+                                </div>
+                              </div>
+                              <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                   <label class="form-label" for="input-city">{{"wkpos.detail.city"|trans}}*</label>
+                                   <input type="text" class="form-control" id="input-{{"wkpos.detail.city"|trans}}" placeholder="City*" v-model="register.city">
+                                </div>
+                                <div class="form-group col-sm-6">
+                                  <label class="form-label" for="input-countryId">{{"wkpos.detail.country"|trans}}*</label>
+                                  <select class="custom-select" id="input-countryId" v-model="register.countryId">
+                                    <option v-for="(country, index) in countries" :key="country.id" :value="country.id">$(country.translated.name)</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                  <button title="{{"wkpos.detail.registerButton"|trans}}" type="button" class="btn btn-primary btn-register float-right" @click="registerCustomer">{{"wkpos.detail.registerButton"|trans}}</button>
+                                </div>
+                              </div>
+                           </div>
+                        </div>
+                      </form>
+                    </div> <!-- Customer Registration -->
+                    <div class="panel-list" :style="{height: customerListHeight}">
+                      <div class="customer-search">
+                        <i class="fa fa-search"></i>
+                        <input type="text" placeholder="{{"wkpos.detail.searchCustomerPlaceHolder"|trans}}" v-on:keyup="searchCustomer($event)">
+                      </div>
+                      <div v-if="posCustomers.length" ref="customerContent" style="margin-top: 56px;">
+                        <div class="panel-content" v-for="(customer, index) in posCustomers" :key="index" @click="selectCustomer(customer.customerId)">
+                          <b>$(customer.name)</b>
+                          <p><i class="fa fa-envelope"></i> $(customer.email)</p>
+                          <p><i class="fa fa-map-marker"></i> $(customer.address.street), $(customer.address.city), $(customer.address.country), $(customer.address.zipcode)</p>
+                        </div>
+                      </div>
+                      <div v-else style="margin-top: 56px;">
+                        <p>{{"wkpos.detail.noCustomerFound"|trans}}? <span style="color: #007aa9;cursor: pointer;" @click="toggleHorizontalPanel">{{"wkpos.detail.addCustomer"|trans}}</span></p>
+                      </div>
+                    </div>
+                    <div class="panel-details" v-if="customer">
+                        <i v-if="customer.name" class="fa fa-user-circle fa-4x"></i>
+                        <p style="font-size: 32px;">$(customer.name)</p>
+                        <p> <i v-if="customer.email" class="fa fa-envelope"></i> $(customer.email)</p>
+                        <div v-if="customer.address">
+                          <p v-if="customer.address.phoneNumber"> <i class="fa fa-phone"></i> $(customer.address.phoneNumber)</p>
+                          <p>
+                            <i class="fa fa-map-marker"></i>
+                            $(customer.address.street), $(customer.address.city), $(customer.address.country), $(customer.address.zipcode)
+                          </p>
+                          <div v-if="customer.customerId == defaultCustomerId">
+                            <span>{{"wkpos.detail.defaultCustomerText"|trans}}</span>
+                          </div>
+                          <div v-else><button class="btn btn-primary" @click="makeDefaultCustomer (customer.customerId,user.outletId)">{{"wkpos.detail.defaultCustomerButton"|trans}}</button>
+                          </div>
+                        </div>
+                        <p style="margin-top:10px"><span class="add-customer cursor" @click="toggleHorizontalPanel">{{"wkpos.detail.addNewCustomer"|trans}}</span></p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Customer Panel -->
+                <div class="panel profile-panel" ref="panelProfile">
+                  <div class="panel-header active">
+                    <p class="cursor inline active" @click="togglePanel('Profile')"><i class="fa fa-angle-double-left"></i> {{"wkpos.detail.backText"|trans}}</p>
+                    <span class="float-right inline closer active" @click="togglePanel('Profile')" style="margin-right: 8px;">&times;</span>
+                  </div>
+                  <div class="panel-body" v-if="user">
+                    <div class="profile name">
+                    {{"wkpos.products.name"|trans}}:  $(user.name)
+                    </div>
+                    <div class="profile email">
+                    {{"wkpos.products.email"|trans}}:  $(user.email)
+                    </div>
+                    <div class="profile-image">
+                      <img v-if="user.avatar" :src="user.avatar" :alt="user.name" onerror="this.src=`${'{{ app.request.getSchemeAndHttpHost() }}{{ app.request.baseUrl }}'}/bundles/webkulpos/img/default.svg`" >
+                    </div>
+                    <div class="profile-currency">
+                      <select class="form-control" ref="currency" v-if="currencies.length">
+                        <option v-for="c in currencies" :value="c.id" :selected="c.id == currency.id">$(c.name)</option>
+                      </select>
+                    </div>
+                    <div class="button-update" style="padding: 5px;">
+                      <button title="{{"wkpos.detail.updateButton"|trans}}" type="button" class="btn btn-primary" @click="update">{{"wkpos.detail.updateButton"|trans}}</button>
+                    </div>
+                  </div>
+                </div> <!-- Checkout Panel -->
+              </div><!-- POS Main Content -->
+              <!-- Column Right -->
+              <div class="column" id="cart-column">
+                <div class="pos-cart" v-bind:style="{height: sidebarHeight}" ref="columnCart">
+                  <div class="pos-cart-header" ref="cartHeader">
+                    <div class="cart-action">
+                      <button type="button" title="{{"wkpos.detail.clearCartTitle"|trans}}" class="btn-cart-delete" @click="clearCart()"><i class="fa fa-trash fa-2x"></i></button>
+                    </div>
+                    <div class="cart-heading">{{"wkpos.detail.cartDetails"|trans}}</div>
+                  </div>
+
+                  <div class="cart-details" ref="cart" v-if="cart.length">
+                    <table class="cart-table">
+                      <tr v-if="cart" v-for="(product, index) in cart" :key="index" class="cart-row">
+                          <td class="cart-product-image">
+                            <img v-if="product.image" class="cart-image" :src="product.image">
+                            <div v-else class="sw-product-image is--placeholder"><span class="sw-product-image__placeholder-icon sw-icon icon--default-object-image sw-icon--fill sw-icon--small"><svg xmlns="http://www.w3.org/2000/svg" width="50" height="40" viewBox="0 0 24 24"><path fill="#758CA3" fill-rule="evenodd" d="M2,20.4948007 L9.25259068,12.3356362 C9.63484734,11.9055974 10.300257,11.8860435 10.7071068,12.2928932 L12.7071068,14.2928932 C12.7218834,14.3076698 12.7361009,14.3227938 12.7497593,14.3382389 L15.2317787,11.3598156 C15.6082272,10.9080774 16.2913058,10.8770923 16.7071068,11.2928932 L22,16.5857864 L22,3 C22,2.44771525 21.5522847,2 21,2 L3,2 C2.44771525,2 2,2.44771525 2,3 L2,20.4948007 Z M3.33795495,22 L21,22 C21.5522847,22 22,21.5522847 22,21 L22,19.4142136 L16.0671984,13.4814119 L11.7682213,18.6401844 C11.4146572,19.0644613 10.7840925,19.1217854 10.3598156,18.7682213 C9.9355387,18.4146572 9.87821464,17.7840925 10.2317787,17.3598156 L11.4841592,15.856959 C11.4160067,15.8158633 11.351699,15.7659126 11.2928932,15.7071068 L10.0428168,14.4570304 L3.33795495,22 Z M3,0 L21,0 C22.6568542,1.3235398e-16 24,1.34314575 24,3 L24,21 C24,22.6568542 22.6568542,24 21,24 L3,24 C1.34314575,24 2.02906125e-16,22.6568542 3.94430453e-31,21 L3.94430453e-31,3 C-2.02906125e-16,1.34314575 1.34314575,1.1851685e-15 3,0 Z M7.5,11 C5.56700338,11 4,9.43299662 4,7.5 C4,5.56700338 5.56700338,4 7.5,4 C9.43299662,4 11,5.56700338 11,7.5 C11,9.43299662 9.43299662,11 7.5,11 Z M7.5,9 C8.32842712,9 9,8.32842712 9,7.5 C9,6.67157288 8.32842712,6 7.5,6 C6.67157288,6 6,6.67157288 6,7.5 C6,8.32842712 6.67157288,9 7.5,9 Z"></path></svg></span></div>
+                            </td>
+                          <td class="cart-product-name">$(product.name)<br><p v-if="product.options">$(product.options)</p></td>
+                          <td class="cart-product-quantity">
+                            <span class="cart-quantity">$(product.quantity)</span>
+                          </td>
+                          <td class="cart-product-price" v-if="products[product.productId]">$(products[product.productId]['priceGrossF'])</td>
+                          <td><i class="fa fa-times-circle cursor fa-2x" title="Remove Product" @click="removeCart(index)"><i></td>
+                      </tr>
+                      <tr v-else>
+                        <td colspan="5">{{"wkpos.detail.emptyCart"|trans}}</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <!-- </pos-cart> -->
+                  <div class="pos-cart-footer" v-bind:style="{display: containerDisplay}">
+                    <div class="inline pos-totals">
+                      <table>
+                        <tbody>
+                          <tr>
+                            <td>{{"wkpos.detail.subTotal"|trans}}</td>
+                            <td class="float-right">$(subTotal)</td>
+                          </tr>
+                          <tr>
+                            <td>{{"wkpos.detail.tax"|trans}}</td>
+                            <td class="float-right">$(cartTax)</td>
+                          </tr>
+                          <tr>
+                            <td>Discount</td>
+                            <td class="float-right"><input type="number" @change="calculateCart()" v-model="discount" name="discount"></td>
+                          </tr>
+                          <tr>
+                            <th>{{"wkpos.detail.grandTotal"|trans}}</th>
+                            <th class="float-right">$(grandTotal)</th>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="pos-checkout">
+                      <div class="checkout-customer">
+                        <button type="button" title="{{"wkpos.menu.customer"|trans}}" name="button" @click="togglePanel('Customer')"> <i class="fa fa-user-circle"></i> $(customerName) <i class="fa fa-pencil float-right"></i> </button>
+                      </div>
+                      <div class="checkout-pay">
+                        <button title="{{"wkpos.detail.payButton"|trans}}" @click="togglePanel('Checkout')" type="button" name="button">{{"wkpos.detail.payButton"|trans}}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>  <!-- POS Cart -->
+
+                <div class="column-order" v-bind:style="{height: sidebarHeight}" v-if="order" ref="columnOrder">
+                  <div class="column-heading">
+                    <div class="order">
+                      {{"wkpos.detail.orderNumber"|trans}} $(order.orderNumber)
+                    </div>
+                  </div>
+                  <div class="column-body" v-if="order.orderDate">
+                    <div class="inline order-desc">
+                      $(order.orderDate)
+                      <br>
+                      $(order.orderTime)
+                      <br>
+                      <br>
+                      <p v-if="order.orderStatus">{{"wkpos.detail.orderStatus"|trans}}: <b>$(order.orderStatus)</b></p>
+                    </div>
+                    <div class="inline order-desc" v-if="order.orderCustomer">
+                      $(order.orderCustomer.firstName) $(order.orderCustomer.lastName)
+                      
+                      <br>
+                      <p>$(order.orderAddress.street), $(order.orderAddress.city), $(order.orderAddress.zipcode), $(order.orderAddress.country.name)</p>
+                    </div>
+                    <dl><dt>Email</dt><dd style="word-wrap: break-word;">$(order.orderCustomer.email)</dd></dl>
+                    
+                    <br>
+                    <div class="order-products block float-left" v-if="order.lineItems">
+                      <p><b>{{"wkpos.detail.orderProduct"|trans}}:</b></p>
+                      <div class="products">
+                        <table class="table table-bordered">
+                          <tr v-for="(item, index) in order.lineItems" :key="index">
+                            <td>$(item.label) <span v-if="item.payload">($(item.payload.optionsString))</span></td>
+                            <td>$(item.quantity)</td>
+                            <td class="text-right">$(order.currency.symbol)$(item.unitPrice|decimal)</td>
+                          </tr>
+                        </table>
+                      </div>
+                      <br>
+                      <table class="table table-bordered">
+                        <tr v-if="order.cashPayment">
+                          <td colspan="2">{{"wkpos.detail.cashPayment"|trans}}</td>
+                          <td class="text-right">$(order.currency.symbol)$(order.cashPayment|decimal)</td>
+                        </tr>
+                        <tr v-if="order.cardPayment">
+                          <td colspan="2">{{"wkpos.detail.cardPayment"|trans}}</td>
+                          <td class="text-right">$(order.currency.symbol)$(order.cardPayment|decimal)</td>
+                        </tr>
+                      </table>
+                      <table class="table">
+                        <tr>
+                          <th>{{"wkpos.detail.netAmount"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.amountNet|decimal)</th>
+                        </tr>
+                        <tr>
+                          <th>{{"wkpos.detail.tax"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.taxTotal|decimal)</th>
+                        </tr>
+                        <tr>
+                          <th>Discount</th>
+                          <th class="text-right" v-if="order.customFields.discount">$(order.currency.symbol)$(order.customFields.discount)</th>
+                    	  <th class="text-right" v-else>$(order.currency.symbol) 0</th>
+                          
+                        </tr>
+                        <tr>
+                          <th>{{"wkpos.detail.grandTotal"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.amountTotal|decimal)</th>
+                        </tr>
+                      </table>
+                    </div>
+                    <div class="block">
+                      <button title="{{"wkpos.detail.printInvoice"|trans}}" type="button" class="btn btn-primary btn-invoice" @click="printInvoice()">{{"wkpos.detail.printInvoice"|trans}}</button>
+                    </div>
+                  </div>
+                  <div class="column-body" v-if="order.date">
+                    <div class="inline order-desc">
+                      $(order.date)
+                      <br>
+                      $(order.time)
+                      <br>
+                      <br>
+                      {# <p v-if="order.orderStatus">{{"wkpos.detail.orderStatus"|trans}}: <b>$(order.orderStatus)</b></p> #}
+                    </div>
+                    <div class="inline order-desc" v-if="order.customer">
+                      $(order.customer.name)
+                      <br>
+                      <p>$(order.customer.address.street), $(order.customer.address.city), $(order.customer.address.zipcode), $(order.customer.address.country)</p>
+                    </div>
+                    <dl><dt>Email</dt><dd style="word-wrap: break-word;">$(order.customer.email)</dd></dl>
+                    <br>
+                    <div class="order-products block float-left" v-if="order.cart">
+                      <p><b>{{"wkpos.detail.orderProduct"|trans}}:</b></p>
+                      <div class="products">
+                        <table class="table table-bordered">
+                          <tr v-for="(item, index) in order.cart" :key="index">
+                            <td>$(item.name) <span v-if="item.payload">($(item.payload.optionsString))</span></td>
+                            <td>$(item.quantity)</td>
+                            <td class="text-right">$(order.currency.symbol)$(item.tax.price|decimal)</td>
+                          </tr>
+                        </table>
+                      </div>
+                      <br>
+                      <table class="table table-bordered">
+                        <tr v-if="order.cashPayment">
+                          <td colspan="2">{{"wkpos.detail.cashPayment"|trans}}</td>
+                          <td class="text-right">$(order.currency.symbol)$(order.cashPayment|decimal)</td>
+                        </tr>
+                        <tr v-if="order.cardPayment">
+                          <td colspan="2">{{"wkpos.detail.cardPayment"|trans}}</td>
+                          <td class="text-right">$(order.currency.symbol)$(order.cardPayment|decimal)</td>
+                        </tr>
+                      </table>
+                      <table class="table">
+                        <tr>
+                          <th>{{"wkpos.detail.netAmount"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.subTotal|decimal)</th>
+                        </tr>
+                        <tr>
+                          <th>{{"wkpos.detail.tax"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.grandTotal-order.subTotal|decimal)</th>
+                        </tr>
+                        <tr>
+                          <th>{{"wkpos.detail.grandTotal"|trans}}</th>
+                          <th class="text-right">$(order.currency.symbol)$(order.grandTotal|decimal)</th>
+                        </tr>
+                      </table>
+                    </div>
+                    <div class="block">
+                      <button title="{{"wkpos.detail.printInvoice"|trans}}" type="button" class="btn btn-primary btn-invoice" @click="printInvoice()">{{"wkpos.detail.printInvoice"|trans}}</button>
+                    </div>
+                  </div>
+                </div>
+              </div><!-- Column Right -->
+
+          </div>  <!-- POS Content -->
+
+        </div>  <!-- POS Contentainer -->
+        <!-- POS Invoice -->
+        <div class="pos-invoice"  style="{display: invoiceDisplay}" ref="posInvoice">
+          <div class="invoice-div" v-if="order.amountTotal">
+            <div class="invoice-heading">
+              <p><b>{{ config.shopName }}</b></p>
+              <p>{{ config.address }}</p>
+              <p>Merchant: $(user.name)</p>
+              <p>{{"wkpos.detail.agent"|trans}}: $(user.name)</p>
+              <p>{{"wkpos.detail.customer"|trans}}: $(order.orderCustomer.firstName) $(order.orderCustomer.lastName)</p>
+              <p>{{"wkpos.detail.date"|trans}}: $(order.orderDate) Time: $(order.orderTime)</p>
+              <p>{{"wkpos.detail.number"|trans}}: <b>$(order.orderNumber)</b> Status: <b>$(order.orderStatus)</b></p>
+            </div>
+            <div class="invoice-content">
+              <table>
+                <thead>
+                  <tr style="border-bottom: dotted 1px black;">
+                    <th>{{"wkpos.detail.product"|trans}}</th>
+                    <th>{{"wkpos.detail.quantity"|trans}}</th>
+                    <th>{{"wkpos.detail.price"|trans}}</th>
+                    <th>{{"wkpos.detail.amount"|trans}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in order.lineItems" :key="index">
+                    <td>$(item.label)<span v-if="item.payload">($(item.payload.optionsString))</span></td>
+                    <td>$(item.quantity)</td>
+                    <td>$(order.currency.symbol)$(item.price.unitPrice|decimal)</td>
+                    <td>$(order.currency.symbol)$(item.totalPrice|decimal)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <br>
+            <div class="invoice-total">
+              <table>
+                <tbody>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.subTotal"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.amountNet|decimal)</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.tax"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.taxTotal|decimal)</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Discount</th>
+                    <td v-if="order.customFields.discount">$(order.currency.symbol)$(order.customFields.discount)</td>
+                    <td v-else>$(order.currency.symbol) 0</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.grandTotal"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.amountTotal|decimal)</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="invoice-div" v-if="order.grandTotal">
+            <div class="invoice-heading">
+              <p><b>{{ config.shopName }}</b></p>
+              <p>{{ config.address }}</p>
+              <p>{{"wkpos.detail.agent"|trans}}: $(user.name)</p>
+              <p>{{"wkpos.detail.customer"|trans}}: $(order.customer.name)</p>
+              <p>{{"wkpos.detail.date"|trans}}: $(order.date) Time: $(order.time)</p>
+              <p>{{"wkpos.detail.number"|trans}}: <b>$(order.txnId)</b> Status: <b>$(order.orderStatus)</b></p>
+            </div>
+            <div class="invoice-content">
+              <table>
+                <thead>
+                  <tr style="border-bottom: dotted 1px black;">
+                    <th>{{"wkpos.detail.product"|trans}}</th>
+                    <th>{{"wkpos.detail.quantity"|trans}}</th>
+                    <th>{{"wkpos.detail.price"|trans}}</th>
+                    <th>{{"wkpos.detail.amount"|trans}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in order.cart" v-if="order.cart" :key="index">
+                    <td>$(item.name) <span v-if="item.payload">($(item.payload.optionsString))</span></td>
+                    <td>$(item.quantity)</td>
+                    <td>$(order.currency.symbol)$(item.tax.price|decimal)</td>
+                    <td>$(order.currency.symbol)$(item.quantity*item.tax.price|decimal)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <br>
+            <div class="invoice-total">
+              <table>
+                <tbody>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.subTotal"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.subTotal|decimal)</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.tax"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.grandTotal|decimal-order.subTotal|decimal)</td>
+                  </tr>
+                  <tr>
+                    <th colspan="2">Discount</th>
+                    <td v-if="order.customFields.discount">$(order.currency.symbol)$(order.customFields.discount)</td>
+                    <td v-else>$(order.currency.symbol) 0</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th colspan="2">{{"wkpos.detail.grandTotal"|trans}}</th>
+                    <td>$(order.currency.symbol)$(order.grandTotal|decimal)</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- offline pos invoice-->
+        <!-- POS Invoice -->
+    </div> <!-- App -->
+
+    <script type="text/javascript">
+        window.addEventListener('beforeunload', function (e) { 
+            e.preventDefault(); 
+            e.returnValue = ''; 
+        });
+        
+      //Vue.use(VueToast);
+      var user = {};
+
+      Vue.use(VueLoading);
+      Vue.component('loading', VueLoading);
+      
+
+      {% if user %}
+      user = {
+          userId: '{{ user.userId }}',
+          name: '{{ user.name }}',
+          username: '{{ user.username }}',
+          email: '{{ user.email }}',
+          merchantId: '{{ user.merchantId }}',
+          outletId: '{{ user.outletId }}',
+          avatar: '{{ user.avatar }}'
+      };
+
+      {% endif %}
+
+      (() => {
+        Vue.use(VueToast);
+        Vue.filter('decimal', function(value) {
+            return parseFloat(value).toFixed(2);
+        })
+
+        var app = new Vue({
+            el: '#app',
+            data() {
+              return {
+                message: 'Welcome to Point of Sale',
+                hostname: "{{ app.request.getSchemeAndHttpHost() }}{{ app.request.baseUrl }}",
+                username: null,
+                password: null,
+                products: [],
+                taxes: [],
+                orders: [],
+                order: [],
+                productModal: null,
+                customers: [],
+                countries: [],
+                currencies: [],
+                salutations: [],
+                register: {
+                  salutationId: '',
+                  firstName: '',
+                  lastName: '',
+                  email: '',
+                  password: '',
+                  street: '',
+                  zipcode: '',
+                  city: '',
+                  countryId: ''
+                },
+                user: user,
+                merchantId : '',
+                contents: [],
+                totalProduct: 0,
+                currency: [],
+                cart: [],
+                sidebarHeight: '100%',
+                loginDisplay: 'block',
+                containerDisplay: 'none',
+                invoiceDisplay: 'none',
+                subTotal: '00.00',
+                subTotalUf: 0,
+                cartTax: '00.00',
+                cartTaxUf: 0,
+                grandTotal: '00.00',
+                grandTotalUf: 0,
+                customerListHeight: '580px',
+                posProducts: [],
+                posCustomers: [],
+                customer: [],
+                paidCash: '',
+                discount: 0,
+                paidCard: '',
+                receivedTotal: '00.00',
+                remainingAmount: '',
+                receivedTotalUf: 0,
+                paid: 0,
+                orderNote: '',
+                customerName: '{{"wkpos.menu.customer"|trans}}',
+                cartKeyboard: [1, 2, 3, 'Qty', 4, 5, 6, 'Price', 7, 8, 9, 'Disc', '.', 0, 'x', 'OK'],
+                error: {
+                  gt: '',
+                  pc1: '',
+                  pc2: ''
+                },
+                wrongCount: 0,
+                variants: null,
+                primaryVariant: null,
+                optionId: null,
+                categories: null,
+                barcodeValue: '',
+                productsBarcode: null,
+                posMode: navigator.onLine,
+                offlineOrders: [],
+                defaultCustomerId: null,
+                baseUrl: "{{ app.request.getSchemeAndHttpHost() }}{{ app.request.baseUrl }}",
+                storageProducts: []
+              };
+            },
+            delimiters: ['$(', ')'],
+            
+            methods: {
+                
+                openCart() {
+                  var x = document.getElementById("cart-column");
+                  if (x.style.display === "none") {
+                    x.style.display = "block";
+                    x.classList.add('show');
+                  } else {
+                    x.style.display = "none";
+                    x.classList.remove('show');
+                  }
+                },
+                openNav() {
+                  document.getElementById("sidebar").style.width = "250px";
+                  document.getElementById("posContainer").style.marginLeft = "250px";
+                  var element = document.querySelectorAll('.pos-header');
+                  for (var i = 0; i < element.length; i++) {
+                      element[i].style.display = 'none';
+                  }
+                },
+
+                /* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
+                closeNav() {
+                  document.getElementById("sidebar").style.width = "0px";
+                  document.getElementById("posContainer").style.marginLeft = "0px";
+                  var element = document.querySelectorAll('.pos-header');
+                  for (var i = 0; i < element.length; i++) {
+                      element[i].style.display = 'block';
+                  }
+                },
+             
+              productInfo(index) {
+                this.productModal = this.products[index];
+              },
+              posLogin() {
+                if(!this.username || !this.password) {
+                  this.$toast.error('{{"wkpos.detail.warningText"|trans}}: {{"wkpos.detail.loginErrorMessage"|trans}}', {
+                      position: 'top'
+                    });
+                    return false;
+                }
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+
+                if (this.wrongCount == 4) {
+                  this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + '{{"wkpos.detail.wrongAttempt"|trans}}', {
+                        position: 'top'
+                  });
+                  axios.post(this.hostname + '/wkpos/wrong/attempt', {
+                    username: this.username
+                  }).then(response => {
+                    if (response.data.error) {
+                      loader.hide();
+                      return false;  
+                    } else {
+                      this.wrongCount = 0;
+                      loader.hide();
+                      return false;  
+                    }          
+                  });               
+                  
+                } else {
+                  axios.post(this.hostname + '/wkpos/login', {
+                    username: this.username,
+                    password: this.password
+                  }).then(response => {
+                    if (response.data.errorCount > 0) {
+                      this.wrongCount = this.wrongCount + 1;
+                      if(response.data.message ==  '') {
+                        this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + '{{"wkpos.detail.wrongAttempt"|trans}}', {
+                          position: 'top'
+                        });
+                      } else {
+                        this.$toast.error('{{"wkpos.detail.warningText"|trans}}: ' + response.data.message, {
+                          position: 'top'
+                        });
+                      }
+                      loader.hide();
+                      return false;
+                    }
+
+                    this.user = response.data.user;
+                    this.loginDisplay = 'none';
+                    this.containerDisplay = 'block';
+                    this.loadCustomers();
+                    this.loadProducts();
+                    this.loadOrders();
+                    this.loadCurrencies();
+                    loader.hide();
+                    this.posProducts = this.products;
+                  })
+                  .catch(error => {
+
+                  });
+                }
+              },
+              logout() {
+                axios.post(this.hostname + '/wkpos/logout').then(response => {
+                  this.loginDisplay = 'block';
+                  this.containerDisplay = 'none';
+                  this.closeNav();
+                  this.products = [];
+                  this.user = user = [];
+                  this.customers = [];
+                  this.totalProduct = 0;
+                  this.currency = [];
+                  this.cart = [];
+                });
+              },
+              loadProducts(categoryId) {
+                let focusElement = document.getElementsByClassName("onfocus");
+                  if (focusElement.length > 0){
+                    focusElement[0].className = focusElement[0].className.replace("onfocus", "");
+                  }
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+                if (this.posMode == true) {
+                axios.post(this.hostname + '/wkpos/products',{
+                  outletId: this.user.outletId ? this.user.outletId : user.outletId,categoryId: categoryId
+                }).then(response => {
+                  this.posProducts = [];
+                  this.products = response.data.products;
+                  this.totalProduct = response.data.total;
+                  this.currency = response.data.currency;
+                  this.categories = response.data.categories;
+                  this.calculateCart();
+                  for (var p in this.products) {
+                    this.posProducts.push(this.products[p])
+                    this.storageProducts.push(this.products[p])
+                  }
+                  loader.hide();
+                })
+                } else {
+                  this.posProducts = this.storageProducts;
+                  loader.hide();
+                }
+              },
+              searchProduct(event) {
+                var key = event.target.value.toLowerCase();
+                var products = [];
+                for (var p in this.products) {
+                  if (this.products[p]['name'].toLowerCase().search(key) != -1) {
+                    products.push(this.products[p]);
+                  }
+                }
+                this.posProducts = products;
+              },
+              loadCustomers() {
+                axios.post(this.hostname + '/wkpos/customer',{outletId:this.user.outletId}).then(response => {
+                  this.customers = response.data.customers;
+                  this.countries = response.data.countries;
+                  this.salutations = response.data.salutations;
+                  this.posCustomers = this.customers.slice(0, 100);
+                  this.defaultCustomerId = response.data.defaultCustomerId;
+                });
+              },
+              loadCurrencies() {
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+                axios.post(this.hostname + '/wkpos/currency').then(response => {
+                  this.currencies = response.data;
+                });
+                loader.hide();
+              },
+              registerCustomer() {
+                if (this.posMode == false) {
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: "You can not register customer as you are offline right now!"', {
+                    position: 'top'
+                  });
+                  return;
+                }
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+                axios.post(this.hostname + '/wkpos/customer/register', {
+                  register: this.register
+                }).then(response => {
+                  if (response.data.error) {
+                    for (var e in response.data.errorMessages) {
+                      this.$toast.error('Warning: ' + response.data.errorMessages[e], {
+                        position: 'bottom'
+                      });
+                    }
+                  } else {
+                    this.customer = response.data.customer;
+                    this.loadCustomers();
+                    this.toggleHorizontalPanel();
+                    for (var r in this.register) {
+                      this.register[r] = '';
+                    }
+                  }
+                });
+                loader.hide();
+              },
+              addTocart(productId) {
+                var product = this.products[productId];
+                
+                if(product == undefined) {
+                  alert('Product Not Found!')
+                  return;
+                }
+                if(product['variant'].length > 0) {
+                  this.variants = product['variant'];
+                  this.primaryVariant = product['primaryVariant'];
+                   let modal = document.getElementById('myModal');
+                    modal.style.display = "block";
+                    return
+                }
+                
+                {# if (product['posStock'] < 1) {
+                  this.$toast.warning('Warning: ' + product.name + '\'s is not available in stock!', {
+                    position: 'top'
+                  });
+                  return;
+                } #}
+
+                var cartLength = this.cart.length;
+                var update = false;
+
+                if (cartLength) {
+                  for (var c in this.cart) {
+                    if (productId == this.cart[c]['productId']) {
+
+                      {# if ((parseInt(this.cart[c]['quantity']) + 1) >= parseInt(product['availableStock'])) {
+                        this.$toast.warning('Warning: ' + product.name + '\'s is not available in stock!', {
+                          position: 'top'
+                        });
+
+                        return false;                        
+                      } else { #}
+                        this.cart[c]['quantity'] += 1;
+                        this.$toast.success('{{"wkpos.detail.success"|trans}}: ' + product.name + '{{"wkpos.detail.addToCartSuccessMessage"|trans}}  ', {
+                          position: 'top'
+                        });
+
+                        this.cart[c]['tax']['tax'] = ((product.priceNetUf * product.tax.taxRate) / 100) * this.cart[c]['quantity'],
+
+                        localStorage.setItem('cart', JSON.stringify(this.cart));
+                        update = true;
+                      {# } #}
+                    }
+                  }
+                }
+
+                if (update) {
+                  this.calculateCart();
+                  return;
+                }
+                var product = {
+                  productId: productId,
+                  name: product.name,
+                  options: product.options,
+                  image: product.image,
+                  quantity: 1,
+                  tax: {
+                    taxId: product.tax.id,
+                    tax: ((product.priceNetUf * product.tax.taxRate) / 100),
+                    taxRate: product.tax.taxRate,
+                    price: product.priceGrossUf
+                  },
+                  payload: {
+                    isNew: false,
+                    productNumber: product.productNumber,
+                    taxId: product.tax.id,
+                    options: product.optionsArray,
+                    optionsString: product.options
+                  }
+                };
+
+                this.$set(this.cart, cartLength, product);
+                
+                this.$toast.success('{{"wkpos.detail.success"|trans}}: ' + product.name + ' {{"wkpos.detail.addToCartSuccessMessage"|trans}}', {
+                  position: 'top'
+                });
+                localStorage.setItem('cart', JSON.stringify(this.cart));
+                this.calculateCart();
+              },
+              removeCart(key) {
+                this.$toast.success('{{"wkpos.detail.success"|trans}}: ' + this.cart[key]['name'] + '{{"wkpos.detail.removedCartMessage"|trans}}', {
+                  position: 'top'
+                });
+
+                this.$delete(this.cart, key);
+
+                localStorage.setItem('cart', JSON.stringify(this.cart));
+                this.calculateCart();
+                this.$refs['paidCash'].dispatchEvent(new Event('keyup'));
+
+                if (this.cart.length < 1) {
+                  this.$refs['panelCheckout'].classList.remove('panel-show');
+
+                  this.subTotalUf = 0;
+                  this.cartTaxUf = 0;
+                  this.grandTotalUf = 0;
+                  this.discount = 0;
+                  
+                  this.subTotal = '00.00';
+                  this.cartTax = '00.00';
+                  this.grandTotal = '00.00';
+                }
+              },
+              calculateCart() {
+                if (this.cart.length) {
+                  var subTotal = 0;
+                  var taxTotal = 0;
+
+                  for (var c in this.cart) {
+                    var product = this.products[this.cart[c]['productId']];
+                    if (product) {
+                      subTotal += product['priceNetUf'] * this.cart[c]['quantity'];
+                      tax = parseFloat((product['priceNetUf'] * product['tax']['taxRate']) / 100) * this.cart[c]['quantity'];
+
+                      if (tax) {
+                        taxTotal += tax;
+                      }
+                    }
+                    if(product) {
+
+                      this.cart[c].tax.price = product['priceGrossUf'] * this.cart[c]['quantity'];
+                    }
+                  }
+
+                  var grandTotal = (taxTotal + subTotal).toFixed(this.currency.decimalPlace);
+
+                  grandTotal = grandTotal - this.discount;
+
+                  taxTotal = taxTotal.toFixed(this.currency.decimalPlace);
+                  subTotal = subTotal.toFixed(this.currency.decimalPlace);
+
+                  this.subTotalUf = subTotal;
+                  this.cartTaxUf = taxTotal;
+                  this.grandTotalUf = grandTotal;
+
+                  this.subTotal = this.formatPrice(subTotal);
+                  this.cartTax = this.formatPrice(taxTotal);
+                  this.grandTotal = this.formatPrice(grandTotal);
+                }
+              },
+              selectCustomer(customerId) {
+                var customer = this.customers.filter((c) => c.customerId == customerId);
+                this.customer = customer[0];
+                this.customerName = this.customer.name;
+              },
+              searchCustomer(event) {
+                var key = event.target.value.toLowerCase();
+                var posCustomers = [];
+                var count = 0;
+                for (var c in this.customers) {
+                  if (this.customers[c]['name'].toLowerCase().search(key) != -1 || this.customers[c]['email'].toLowerCase().search(key) != -1) {
+                    count ++;
+                    if (count >= 30) {
+                      break;
+                    }
+                    posCustomers.push(this.customers[c]);
+                  }
+                }
+
+                this.posCustomers = posCustomers;
+              },
+              togglePanel(ref) {
+                this.closeNav();
+                this.$refs['columnCart'].style.display = 'block';
+                if (ref == 'Checkout' && this.cart.length < 1) {
+                  this.$toast.warning('Warning: Add at least one product to cart!', {
+                    position: 'top'
+                  });
+                  return;
+                } else if (ref == 'Checkout') {
+                  this.remainingAmount = '';
+                }
+                var panels = ['panelCustomer', 'panelCheckout', 'panelHome', 'panelSale', 'panelProfile', 'menuCustomer', 'menuCheckout', 'menuSale', 'menuHome', 'menuProfile'];
+                for (var r in panels) {
+                  if (panels[r] != 'panel' + ref) {
+                    if (this.$refs[panels[r]].classList.contains('active')) {
+                        this.$refs[panels[r]].classList.remove('active');
+                    }
+                    this.$refs[panels[r]].classList.remove('panel-show');
+                  }
+                }
+
+                if (this.$refs['panel' + ref].classList.contains('panel-show')) {
+                  this.$refs['panel' + ref].classList.remove('panel-show');
+                  this.$refs['menu' + ref].classList.remove('active');
+                  this.$refs['menuHome'].classList.add('active');
+                } else {
+                  if (ref != 'Home') {
+                    this.$refs['panel' + ref].classList.add('panel-show');
+                  }
+                  this.$refs['menu' + ref].classList.add('active');
+                }
+
+                if (this.$refs['panelSale'].classList.contains('panel-show')) {
+                  this.$refs['columnOrder'].classList.add('column-show');
+                  this.$refs['columnCart'].style.display = 'none';
+                } else if (this.$refs['columnOrder'].classList.contains('column-show')) {
+                  this.$refs['columnOrder'].classList.remove('column-show');
+                  this.$refs['columnCart'].style.right = '0';
+                }
+              },
+              toggleHorizontalPanel() {
+                if (this.$refs['registrationPanel'].classList.contains('panel-active')) {
+                  this.$refs['registrationPanel'].classList.remove('panel-active');
+                } else {
+                  this.$refs['registrationPanel'].classList.add('panel-active');
+                }
+              },
+
+              formatPrice(price) {
+                return this.currency.symbol + price;
+              },
+
+              clearCart() {
+                if (confirm('{{"wkpos.detail.emptyCartMessage"|trans}}')) {
+                  this.cart = [];
+                  localStorage.setItem('cart', JSON.stringify(this.cart));
+                  this.$toast.success('{{"wkpos.detail.success"|trans}}: {{"wkpos.detail.emptyCartMesssage"|trans}}', {
+                    position: 'top'
+                  });
+                  this.subTotal = '00.00';
+                  this.cartTax = '00.00';
+                  this.grandTotal = '00.00';
+                  this.subTotalUf = 0;
+                  this.cartTaxUf = 0;
+                  this.grandTotalUf = 0;
+                  this.discount = 0;
+                  this.paidCash = '';
+                  this.paidCard = ''
+                  this.receivedTotal = '00.00';
+                  this.receivedTotalUf = 0;
+                  this.$refs['panelCheckout'].classList.remove('panel-show');
+                }
+              },
+              calculatePayment(event, type) {
+                var paidCash = isNaN(parseFloat(this.paidCash)) ? 0 : parseFloat(this.paidCash);
+                var paidCard = isNaN(parseFloat(this.paidCard)) ? 0 : parseFloat(this.paidCard);
+
+                paidCard = parseFloat(paidCard);
+                paidCash = parseFloat(paidCash);
+
+                if (event.target.value != '' && isNaN(parseFloat(event.target.value))) {
+                  this.$toast.error('{{"wkpos.detail.warningText"|trans}}: {{"wkpos.detail.invalidAmountMessage"|trans}}!', {
+                    position: 'top'
+                  });
+                }
+
+                this.receivedTotalUf = paidCard + paidCash;
+                this.receivedTotalUf = parseFloat(this.receivedTotalUf.toFixed(2));
+
+                this.receivedTotal = this.currency.symbol + this.receivedTotalUf;
+
+                if (this.receivedTotalUf < this.grandTotalUf && (this.grandTotalUf - this.receivedTotalUf > 0)) {
+                  this.paid = 0;
+                  this.remainingAmount = this.currency.symbol + (this.grandTotalUf - this.receivedTotalUf).toFixed(2);
+                } else {
+                  this.remainingAmount = '';
+                  this.paid = 1;
+                }
+              },
+              placeOrder() {
+                if (this.customer.length < 1) {
+                  if(this.defaultCustomerId){
+                    var customer = this.customers.filter((c) => c.customerId == this.defaultCustomerId);
+                    this.customer = customer[0];
+                    this.customerName = this.customer.name;
+                  } 
+                  else{
+                    this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: {{"wkpos.detail.selectCustomerMessage"|trans}}', {
+                      position: 'top'
+                    });
+                    this.togglePanel('Customer');
+                    return;
+                  }
+                }
+
+                var confirm = true;
+                var grandTotalUf = parseFloat(this.grandTotalUf);
+                var paidCash = parseFloat(this.paidCash) ? parseFloat(this.paidCash) : 0;
+                var paidCard = parseFloat(this.paidCard) ? parseFloat(this.paidCard) : 0;
+                var paidTotal = paidCash + paidCard;
+
+                if (paidTotal < grandTotalUf) {
+                  confirm = window.confirm('The payment is not completely paid, are sure to place the order?');
+                }
+
+                if (confirm) {
+                  let loader = this.$loading.show({
+                      loader: 'dots',
+                      color: '#cce3fb'
+                  });
+                  this.error.gt = window.btoa(this.grandTotalUf);
+                  this.error.pc1 = window.btoa(this.paidCash);
+                  this.error.pc2 = window.btoa(this.paidCard);
+                  var d = new Date();
+                  var txnId = Math.floor(Math.random() * 1000);
+                  let orderData = {error: this.error, cart: this.cart, customer: this.customer, user: this.user, grandTotal: this.grandTotalUf, subTotal: this.subTotalUf, cardPayment: parseFloat(this.paidCard), cashPayment: parseFloat(this.paidCash), orderNote: this.orderNote, currency: this.currency, time: d.getHours()+':'+d.getMinutes()+':'+d.getSeconds(), date: d.getFullYear()+'-'+d.getMonth()+1+'-'+d.getDate(), txnId: txnId};
+                  console.log(this.user);
+                  if (this.posMode == true) {
+                    axios.post(this.hostname + '/wkpos/order/add', {
+                      error: this.error,
+                      cart: this.cart,
+                      customer: this.customer,
+                      user: this.user,
+                      merchantId: this.user.merchantId,
+                      grandTotal: this.grandTotalUf,
+                      subTotal: this.subTotalUf,
+                      cardPayment: parseFloat(this.paidCard),
+                      cashPayment: parseFloat(this.paidCash),
+                      orderNote: this.orderNote,
+                      currency: this.currency,
+                      createdBy: this.user.name,
+                      discount: this.discount
+                    }).then(response => {
+                      if (response.data.success && !response.data.error) {
+                        this.togglePanel('Checkout');
+                        loader.hide();
+                        // Updating Product Stock
+
+                        for (var p in this.cart) {
+                          this.products[this.cart[p]['productId']]['availableStock'] = this.products[this.cart[p]['productId']]['availableStock'] - this.cart[p]['quantity'];
+                        }
+
+                        this.customer = [];
+                        this.cart = [];
+                        localStorage.setItem('cart', JSON.stringify(this.cart));
+                        this.subTotal = '00.00';
+                        this.cartTax = '00.00';
+                        this.grandTotal = '00.00';
+                        this.receivedTotal = '00.00';
+                        this.grandTotalUf = 0;
+                        this.discount = 0;
+                        this.subTotalUf = 0;
+                        this.paidCard = '';
+                        this.paidCash = '';
+                        this.customerName = 'Customer';
+                        this.orderNote = '';
+                        this.calculateCart();
+                        this.$toast.success('{{"wkpos.detail.success"|trans}}: {{"wkpos.detail.orderPlacedMessage"|trans}}', {
+                          position: 'top'
+                        });
+                        this.loadOrders();
+
+                      } else {
+                        if(response.data.productName) {
+                          this.$toast.error(response.data.productName + response.data.message, {
+                            position: 'top'
+                          });
+                        } else {
+
+                          this.$toast.error('Error: error in adding order!', {
+                            position: 'top'
+                          });
+                        }
+                        loader.hide();
+                      }
+                    });
+                    this.loadOrders();
+                  } else {
+                    this.offlineOrders = JSON.parse(localStorage.getItem('offlineOrders')) || [];
+                    this.offlineOrders.push(orderData);
+                    localStorage.setItem('offlineOrders',JSON.stringify(this.offlineOrders));
+                    loader.hide();
+                    this.offlineOrders = JSON.parse(localStorage.getItem('offlineOrders'));
+                      this.togglePanel('Checkout');
+                        loader.hide();
+                        // Updating Product Stock
+
+                        for (var p in this.cart) {
+                          this.products[this.cart[p]['productId']]['availableStock'] = this.products[this.cart[p]['productId']]['availableStock'] - this.cart[p]['quantity'];
+                        }
+
+                        this.customer = [];
+                        this.cart = [];
+                        localStorage.setItem('cart', JSON.stringify(this.cart));
+                        this.subTotal = '00.00';
+                        this.cartTax = '00.00';
+                        this.grandTotal = '00.00';
+                        this.receivedTotal = '00.00';
+                        this.grandTotalUf = 0;
+                        this.discount = 0;
+                        this.subTotalUf = 0;
+                        this.paidCard = '';
+                        this.paidCash = '';
+                        this.customerName = 'Customer';
+                        this.orderNote = '';
+                        this.calculateCart();
+                        this.$toast.success('{{"wkpos.detail.success"|trans}}: {{"wkpos.detail.orderPlacedMessage"|trans}}', {
+                          position: 'top'
+                        });
+                      
+                  }
+                }
+              },
+              loadOrders() {
+                axios.post(this.hostname + '/wkpos/orders', {
+                  userId: this.user.userId
+                }).then(response => {
+                  this.orders = response.data
+                });
+              },
+              orderDetail(index) {
+                if (this.orders[index]) {
+                  this.order = this.orders[index];
+                }
+              },
+              offlineOrderDetail(index) {
+                if (this.offlineOrders[index]) {
+                    this.order = this.offlineOrders[index];
+                }
+              },
+              printInvoice() {
+                document.getElementById("posContainer").style.display = 'none';
+                this.$refs['posInvoice'].style.display = 'block';
+
+                window.print();
+
+                document.getElementById("posContainer").style.display = 'block';
+                this.$refs['posInvoice'].style.display = 'none';
+              },
+              validateNumber(thisthis, event, nodot = false) {
+                var keycode = (event.which) ? event.which : event.keyCode;
+
+                if (keycode == 46) {
+                  if (nodot) {
+                    return false;
+                  }
+
+                  var val = thisthis.value;
+                  if (val == val.replace('.', '')) {
+                    return true;
+                  } else {
+                    return false;
+                  }
+                }
+                //comparing pressed keycodes
+                if (!(keycode == 8 || keycode == 9 || keycode == 46 || keycode == 116) && (keycode < 48 || keycode > 57)) {
+                  return false;
+                } else {
+                  return true;
+                }
+              },
+
+              handleResize() {
+                this.sidebarHeight = (innerHeight - 60) + 'px';
+                this.$refs['panelHome'].style.height = (innerHeight - 60) + 'px';
+                this.$refs['pos-main-content'].style.height = (innerHeight - 60) + 'px';
+                this.customerListHeight = (innerHeight - 60) + 'px';
+                this.$refs['registrationPanel'].style.height = (innerHeight - 40) + 'px';
+                this.$refs['registrationPanel'].style.bottom = -(innerHeight - 40) + 'px';
+              },
+
+              update() {
+                if (this.posMode == false) {
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: "You can not update currnecy as you are offline right now!"', {
+                    position: 'top'
+                  });
+                  return;
+                }
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+
+                var currencyId = this.$refs['currency'].value;
+                axios.post(this.hostname + '/wkpos/configure', {
+                  currencyId: currencyId
+                }).then(response => {
+                  this.posProducts = [];
+                  this.loadProducts();
+                  this.loadOrders();
+                  this.togglePanel('Profile');
+                  this.$toast.success('{{"wkpos.detail.success"|trans}}: {{"wkpos.detail.updateCurrencyMessage"|trans}}', {
+                  position: 'top'
+                });
+                });
+                loader.hide();
+              },
+              closeModal() {
+                
+                var modal = document.getElementById("myModal");
+                modal.style.display = "none";
+                
+                window.onclick = function(event) {
+                  if (event.target == modal) {
+                    modal.style.display = "none";
+                  }
+                }
+      
+              },
+              closeCategoryModal() {
+                var modal = document.getElementById("categoryList");
+                modal.style.display = "none";
+                
+                window.onclick = function(event) {
+                  if (event.target == modal) {
+                    modal.style.display = "none";
+                  }
+                }
+              },
+              onClickCategory(categoryId) {
+                let loader = this.$loading.show({
+                    loader: 'dots',
+                    color: '#cce3fb'
+                });
+                if (this.posMode == false) {
+                  let filterProducts = [];
+                  this.storageProducts.forEach((item,index)=>{
+                    if(item.categories.indexOf(categoryId) != -1) {
+                      filterProducts.push(item);
+                    }
+                  })
+                  this.posProducts = filterProducts;
+                  loader.hide();
+                }
+                else {
+                  axios.post(this.hostname + '/wkpos/products',{
+                    outletId: this.user.outletId ? this.user.outletId : user.outletId,categoryId: categoryId
+                  }).then(response => {
+                    this.posProducts = [];
+                    var filterProducts = response.data.products;
+                    this.calculateCart();
+                    for (var p in filterProducts) {
+                      this.posProducts.push(filterProducts[p])
+                    }
+                    loader.hide();
+                  })
+                }
+                  let focusElement = document.getElementsByClassName("onfocus");
+                  let labelElement = document.getElementById('label-'+categoryId);
+                  if (focusElement.length > 0){
+                    focusElement[0].className = focusElement[0].className.replace("onfocus", "");
+                  }
+                  labelElement.classList.add("onfocus")
+
+              },
+              openCategoryModal() {
+                let modal = document.getElementById('categoryList');
+                    modal.style.display = "block";
+              },
+              openSubCategory(id) {
+                let element = document.getElementById('subcat-'+id);
+                let plusiconelement = document.getElementById('plusicon-'+id);
+                let minusiconelement = document.getElementById('minusicon-'+id);
+                element.style.display = "block";
+                plusiconelement.style.display = "none";
+                minusiconelement.style.display = "block"
+              },
+              closeSubCategory(id) {
+                let element = document.getElementById('subcat-'+id);
+                let plusiconelement = document.getElementById('plusicon-'+id);
+                let minusiconelement = document.getElementById('minusicon-'+id);
+                element.style.display = "none";
+                plusiconelement.style.display = "block";
+                minusiconelement.style.display = "none"
+              },
+              showBarcodeModel() {
+                let element = document.getElementById('barcode-model');
+                element.style.display = 'block';
+              },
+              closeBarcodeModal() {
+                let element = document.getElementById('barcode-model');
+                element.style.display = 'none';
+              },
+              getProductBarcode() {
+                axios.post(this.hostname+'/wkpos/barcode').then(result=>{
+                  this.productsBarcode = result.data;
+                  localStorage.setItem('productsBarcode',JSON.stringify(this.productsBarcode));
+                })
+              },
+              enterBarcode(event){
+                if(this.posMode == false) {
+                  for (const [key, value] of Object.entries(this.productsBarcode)) {
+                    if(value.barcode == this.barcodeValue){
+                      this.addTocart(value.productId);
+                      this.closeBarcodeModal()
+                      return;
+                    }
+                  }
+                  alert('barcode not found')
+                } else {
+                  axios.post(this.hostname+'/wkpos/get/single/barcode',{
+                    barcode: this.barcodeValue
+                  }).then(result=>{
+                    if(result.data){
+                      this.addTocart(result.data);
+                      this.closeBarcodeModal()
+                      return;
+                    } else {
+                      alert('barcode not found')
+                    }
+                  })
+                }
+              },
+              changePosMode() {
+                this.posMode = navigator.onLine;
+                let element = document.getElementById('networkIcon');
+                if (this.posMode == true){
+                  element.classList.remove('network-off-signal');
+                  element.classList.add('network-on-signal');
+                  this.posMode = true;
+                  this.$toast.success('{{"wkpos.detail.success"|trans}}: You have successfully entered Online mode', {
+                      position: 'top'
+                    });
+                } else {
+                  element.classList.remove('network-on-signal');
+                  element.classList.add('network-off-signal');
+                  this.posMode = false;
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: You have successfully entered Offline mode', {
+                      position: 'top'
+                    });
+                }
+              },
+              switchPosMode(){
+                let element = document.getElementById('networkIcon');
+                if (element.classList.contains('network-on-signal')) {
+                  element.classList.remove('network-on-signal');
+                  element.classList.add('network-off-signal');
+                  this.posMode = false;
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: You have successfully entered Offline mode', {
+                      position: 'top'
+                    });
+                } else {
+                  element.classList.remove('network-off-signal');
+                  element.classList.add('network-on-signal');
+                  this.posMode = true;
+                  this.$toast.success('{{"wkpos.detail.success"|trans}}: You have successfully entered Online mode', {
+                      position: 'top'
+                    });
+                }
+              },
+              clickOrderTab(id) {
+                if(id == 'previous') {
+                  document.getElementById('offline').style.display = 'none'
+                  document.getElementById(id).style.display = 'block';
+                  this.$refs['previous-tab'].classList.add('active');
+                  this.$refs['offline-tab'].classList.remove('active');
+                  
+                } else {
+                  document.getElementById('previous').style.display = 'none'
+                  document.getElementById(id).style.display = 'block';
+                  this.$refs['offline-tab'].classList.add('active');
+                  this.$refs['previous-tab'].classList.remove('active');
+                }
+                
+              },
+              syncAllOrders() {
+                if(this.posMode == false) {
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: "You can not synchronize orders as you are offline right now!"', {
+                    position: 'top'
+                  });
+                  return;
+                }
+                let loader = this.$loading.show({
+                      loader: 'dots',
+                      color: '#cce3fb'
+                  });
+                axios.post(this.hostname + '/wkpos/sync/order', {
+                  data: this.offlineOrders }).then(response=>{
+                    if(response.data.success && ! response.data.error) {
+                      loader.hide();
+                      this.$toast.success('{{"wkpos.detail.success"|trans}}: "Orders has been successfully synchronized"', {
+                        position: 'top'
+                      });
+                      localStorage.removeItem('offlineOrders');
+                      this.offlineOrders = [];
+                      this.loadOrders();
+                    }
+                  })
+              },
+              makeDefaultCustomer(customerId,outletId) {
+                if (this.posMode == false) {
+                  this.$toast.warning('{{"wkpos.detail.warningText"|trans}}: "You can not request as you are offline right now!"', {
+                    position: 'top'
+                  });
+                  return;
+                }
+                let loader = this.$loading.show({
+                      loader: 'dots',
+                      color: '#cce3fb'
+                  });
+                axios.post(this.hostname+'/wkpos/default/customer',{customerId:customerId,outletId:outletId}).then(result=>{
+                  if(result.data.success){
+                    loader.hide();
+                    this.defaultCustomerId = result.data.id;
+                    this.loadCustomers();
+                    this.$toast.success('{{"wkpos.detail.success"|trans}}: "Successfully made default customer"', {
+                        position: 'top'
+                      });
+                  }
+                })
+              }
+
+            },
+
+            computed: {
+              cartCount() {
+                quantity = 0;
+                for (var c in this.cart) {
+                  quantity += this.cart[c]['quantity'];
+                }
+                return quantity;
+              },
+              
+            },
+
+            mounted() {
+              if (this.user) {
+                {% if user %}
+             
+                  let loader = this.$loading.show({
+                      loader: 'dots',
+                      color: '#cce3fb'
+                  });
+                  this.loginDisplay = 'none';
+                  this.containerDisplay = 'block';
+                  this.offlineOrders = JSON.parse(localStorage.getItem('offlineOrders'));
+                  
+                  this.loadProducts();
+                  this.getProductBarcode();
+                  this.loadCustomers();
+                  this.loadOrders();
+                  this.loadCurrencies();
+                  loader.hide();
+                {% endif %}
+                  
+              }
+              window.addEventListener("online", this.changePosMode);
+              window.addEventListener("offline", this.changePosMode);
+
+              if (localStorage.getItem('cart')) {
+                this.cart = JSON.parse(localStorage.getItem('cart'));
+              }
+
+              this.$refs['user-ref'].focus();
+            },
+            
+            created() {
+              window.addEventListener('resize', this.handleResize)
+              setTimeout(() => {
+                this.$refs['panelHome'].style.left = '70px';
+                this.handleResize();
+              }, 1000);
+
+              var title = '{{ config.heading }}';
+              
+              if (title == '') {
+                title = 'Shopware POS';
+              }
+              document.title = title + ' | ' + document.title;
+            }
+        });
+      })();
+      Vue.config.devtools = true;
+    </script>
+{% endblock %}{# Body Ended #}

@@ -1,0 +1,67 @@
+{% block wkpos_outlet_list %}
+    <sw-page class="wkpos-outlet-list">
+        {% block wkpos_outlet_list_smart_bar_header %}
+            <template #smart-bar-header>
+                <h2>
+                    {% block wkpos_outlet_list_smart_bar_header_title_text %}
+                        {{ $tc('sw-settings.index.title') }}
+                        <sw-icon name="small-arrow-medium-right" small>
+                        </sw-icon>
+                        {{ $tc('wkpos-outlet.general.mainMenuItemGeneral') }}
+                    {% endblock %}
+
+                    {% block wkpos_outlet_list_smart_bar_header_amount %}
+                        <span v-if="!isLoading" class="sw-page__smart-bar-amount">
+                            ({{ total }})
+                        </span>
+                    {% endblock %}
+                </h2>
+            </template>
+        {% endblock %}
+
+        {% block wkpos_outlet_list_smart_bar_actions %}
+            <template slot="smart-bar-actions">
+                <sw-button variant="primary" :routerLink="{ name: 'wkpos.outlet.create' }">
+                    {{ $t('wkpos-outlet.list.addButtonText') }}
+                </sw-button>
+            </template>
+        {% endblock %}
+        <template slot="content">
+            {% block wkpos_outlet_list_content %}
+                <sw-entity-listing
+                    v-if="outlets"
+                    :items="outlets"
+                    :repository="repository"
+                    :showSelection="false"
+                    :columns="columns"
+                    :isLoading="isLoading"
+                    detailRoute="wkpos.outlet.detail">
+                    {% block wkpos_outlet_list_grid_columns_address %}
+                        <template #column-address="{ item }">
+                            {{ $t(item.address) }}, {{ $t(item.country.translated.name) }}
+                        </template>
+                    {% endblock %}
+                    {% block wkpos_outlet_list_grid_columns_active %}
+                        <template #column-active="{ item, isInlineEdit }">
+                            {% block wkpos_outlet_list_grid_columns_active_inline_edit %}
+                                <template v-if="isInlineEdit">
+                                    <sw-checkbox-field v-model="item.active"></sw-checkbox-field>
+                                </template>
+                            {% endblock %}
+
+                            {% block wkpos_outlet_list_grid_columns_active_content %}
+                                <template v-else>
+                                    <sw-icon v-if="item.active" name="small-default-checkmark-line-medium" small class="is--active"></sw-icon>
+                                    <sw-icon v-else name="small-default-x-line-medium" small class="is--inactive"></sw-icon>
+                                </template>
+                            {% endblock %}
+                        </template>
+                    {% endblock %}
+                </sw-entity-listing>
+            {% endblock %}
+            {% block wkpos_outlet_list_empty_state %}
+                <sw-empty-state v-if="!isLoading && !total" :title="$tc('wkpos-outlet.list.messageEmpty')" :icon="$tc('wkpos-outlet.general.outlet-icon')"></sw-empty-state>
+            {% endblock %}
+        </template>
+    </sw-page>
+{% endblock %}

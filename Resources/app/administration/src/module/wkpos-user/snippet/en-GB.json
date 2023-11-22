@@ -1,0 +1,57 @@
+{
+    "wkpos-user": {
+        "general": {
+            "mainMenuItemGeneral": "POS User",
+            "descriptionTextModule": "Manage POS User Here",
+            "labelUserList": "POS User",
+            "userIcon": "default-avatar-multiple"
+        },
+        "list": {
+            "addButtonText": "Add User",
+            "columnUsername": "Username",
+            "columnMedia": "Avatar",
+            "columnOutlet": "Outlet",
+            "columnEmail": "Email",
+            "columnFirstName": "First Name",
+            "columnLastName": "Last Name",
+            "columnActive": "Active Status",
+            "messageEmpty": "No user added yet!"
+        },
+        "detail": {
+            "labelUsername": "Username",
+            "labelOutlet": "Outlet",
+            "labelFirstName": "First Name",
+            "labelLastName": "Last Name",
+            "labelEmail": "Email",
+            "labelActive": "Active Status",
+            "labelPassword": "Password",
+            "labelNewPassword": "New Password",
+            "labelChangePassword": "Change Password",
+            "labelProfilePicture": "Profile picture",
+            "labelUseAsAvatar": "Avatar",
+            "labelButtonCancel": "Cancel",
+            "labelButtonChangePassword": "Change",
+            "labelUploadAvatar": "Upload an avatar",
+            "placeholderUsername": "Enter Username",
+            "placeholderFirstName": "Enter First Name",
+            "placeholderLastName": "Enter Last Name",
+            "placeholderEmail": "Enter Email",
+            "placeholderPassword": "Enter Password",
+            "placeholderNewPassword": "Enter New Password",
+            "contentActive": "Active | Inactive",
+            "cancelButtonText": "Cancel",
+            "saveButtonText": "Save",
+            "errorTitle": "Error",
+            "errorSaveMessage": "POS User could not be saved",
+            "activeText": "Active",
+            "inActiveText": "Inactive",
+            "titleImageCard": "Profile image",
+            "userOutletIdError": "Could not load outlet",
+            "errorUsernameUsedMessage": "Username \"{username}\" is already taken!",
+            "errorEmailUsedMessage": "Email \"{email}\" is already taken!",
+            "textChangePassword": "By pressing the change button the password be saved immediately.",
+            "textSuccessTitle": "Success",
+            "textSuccessMessage": "The user has been saved"
+        }
+    }
+}

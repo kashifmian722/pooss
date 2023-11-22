@@ -1,0 +1,11 @@
+{% block wkpos_user_detail_content_password %}
+    <sw-password-field
+            :label="$tc('wkpos-user.detail.labelPassword')"
+            v-model="user.password"
+            :passwordToggleAble="true"
+            :error="userPasswordError"
+            :copyAble="false" required>
+    </sw-password-field>
+{% endblock %}
+
+{% block wkpos_user_detail_grid_change_password %}{% endblock %}

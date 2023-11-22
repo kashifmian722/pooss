@@ -1,0 +1,13 @@
+{% block wkpos_barcode_print_page %}
+    {% block wkpos_product_list_grid_columns_barcode %}
+        <div id="placehere"> 
+            <img :id="barcodeIdSuffix" style="width:150px;height:65px;padding:5px" />
+            <div style="display:inline-block">
+            <sw-button id="wkpos-back-button" :routerLink="{name:'wkpos.product.index'}" style="margin-left:20px;">Back</sw-button>
+            </div>
+            <div style="display:inline-block">
+            <sw-button @click="printImage" id="wkpos-print-button" style="margin-left:20px;">Print</sw-button>
+            </div>
+        </div>
+    {% endblock %}
+{% endblock %}

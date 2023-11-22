@@ -1,0 +1,166 @@
+{% block wkpos_product_list %}
+    
+    <sw-page class="wkpos-product-list">
+        {% block sw_order_list_search_bar %}
+            <template #search-bar>
+                <sw-search-bar initialSearchType="product"
+                               :initialSearch="term"
+                               @search="onSearch">
+                </sw-search-bar>
+            </template>
+        {% endblock %}
+
+        {% block wkpos_product_list_smart_bar_header %}
+            <template #smart-bar-header>
+                {% block wkpos_product_list_smart_bar_header_title %}
+                    <h2>
+                        {% block wkpos_product_list_smart_bar_header_title_text %}
+                            {{ $tc('sw-settings.index.title') }}
+                            <sw-icon name="small-arrow-medium-right" small>
+                            </sw-icon>
+                            {{ $tc('wkpos-product.general.mainMenuItemGeneral') }}
+                        {% endblock %}
+
+                        {% block wkpos_product_list_smart_bar_header_amount %}
+                            <span v-if="!isLoading" class="sw-page__smart-bar-amount">
+                                ({{ total }})
+                            </span>
+                        {% endblock %}
+                    </h2>
+                {% endblock %}
+            </template>
+        {% endblock %}
+
+        {% block wkpos_product_list_smart_bar_actions %}
+            <template slot="smart-bar-actions">
+                <sw-select-field :placeholder="$t('wkpos-product.list.columnOutlet')" class="outlet-select" @change="onChangeOutlet">
+                    <option v-for="outlet in outlets" :value="outlet.id">
+                        {{ outlet.name }}
+                    </option>
+                </sw-select-field>
+                <sw-button-process
+                    :isLoading="isLoading"
+                    :processSuccess="processSuccess"
+                    variant="primary"
+                    @click="assignProducts">
+                    {{ $t('wkpos-product.list.assignButtonText') }}
+                </sw-button-process>
+            </template>
+        {% endblock %}
+        <template #content>
+            {% block wkpos_product_list_content %}
+                <div class="wkpos-product-list__content" ref="productListed">
+                    {% block wkpos_product_list_grid %}
+                        <sw-entity-listing ref="swProductGrid"
+                                           v-if="products"
+                                           class="sw-product-list-grid"
+                                           :items="products"
+                                           :columns="productColumns"
+                                           :repository="productRepository"
+                                           detailRoute="sw.product.detail"
+                                           :showSelection="true"
+                                           :isLoading="isLoading"
+                                           @select-item="onSelectionChanged"
+                                           @select-all-items="onSelectionChanged">
+                            {% block wkpos_product_list_grid_columns %}
+                                {% block wkpos_product_list_grid_columns_name_preview %}
+                                    <template #preview-name="{ item }" :id="item.id">
+                                        <sw-media-preview-v2 :source="item.cover ? item.cover.media : null"></sw-media-preview-v2>
+                                        <sw-button v-if="item.childCount>0"
+                                            class="sw-product-list__variant-indicator"
+                                            size="x-small" style="margin-right:7px"
+                                            v-tooltip="{ message: $tc('sw-product.list.variantIndicatorTooltip') }">
+                                                <sw-icon name="default-web-variants"
+                                                    size="14px">
+                                                </sw-icon>
+                                        </sw-button>
+                                    </template>
+                                    
+                                {% endblock %}
+
+                                {% block wkpos_product_list_grid_columns_active %}
+                                    <template #column-active="{ item }">
+
+                                        {% block wkpos_product_list_grid_columns_active_content %}
+                                            <template>
+                                                <sw-icon v-if="item.active" name="small-default-checkmark-line-medium" small class="is--active"></sw-icon>
+                                                <sw-icon v-else name="small-default-x-line-medium" small class="is--inactive"></sw-icon>
+                                            </template>
+                                        {% endblock %}
+                                    </template>
+                                {% endblock %}
+                                {% block sw_product_list_grid_columns_price %}
+                                    <template v-for="currency in currencies"
+                                              #column-price="{ item }">
+                                        {{ getCurrencyPriceByCurrencyId(item.id, currency.id).gross | currency(currency.isoCode) }}
+                                    </template>
+                                {% endblock %}
+                                {% block wkpos_product_list_grid_columns_stock %}
+                                    <template #column-stock="{ item, compact }">
+                                        {% block wkpos_product_list_grid_columns_stock_content %}
+                                            <template>
+                                                {{ item.stock }}
+                                                <sw-color-badge :variant="item.stock | stockColorVariant"></sw-color-badge>
+                                            </template>
+                                        {% endblock %}
+                                    </template>
+                                {% endblock %}
+                            {% endblock %}
+                            {% block wkpos_product_list_grid_columns_assign_stock %}
+                                <template #column-assing="{item}">
+                                    <sw-field type="number"
+                                            :id = "item.id"
+                                            v-model="quantity[item.id]"
+                                            numberType="int"
+                                            :min="1"
+                                            :placeholder="$t('wkpos-product.list.placeholderAssignStock')">
+                                    </sw-field>
+                                </template>
+                            {% endblock %}
+                            {% block wkpos_product_list_grid_columns_action %}
+                                <template #column-action="{item}">
+                                    <sw-button v-model="item.id" @click="assignToOutlet(item)">{{ $t('wkpos-product.list.assignButtonText') }}</sw-button>
+                                </template>
+                            {% endblock %}
+                            {% block wkpos_product_list_grid_columns_barcode %}
+                                <template #column-barcode="{item}">
+                                   <img :id="barcodeIdSuffix+item.id" style="height:40px;width:194px" :src="imgurlAlt" />
+                                   
+                                </template>                                                    
+                            {% endblock %}
+
+                            {% block wkpos_product_list_grid_columns_actions %}
+                                <template slot="actions" slot-scope="{ item }">
+                                    {% block wkpos_generate_barcode_button %}
+                                        <sw-context-menu-item class="" @click="generateBarcode(item.id)">
+                                            {{ $tc('wkpos-product.list.generateButtonText') }}
+                                        </sw-context-menu-item>
+                                    {% endblock %}
+                                    {% block wkpos_print_barcode_button %}
+                                        <sw-context-menu-item v-if="item.extensions.wkpos_barcode[0]"  :routerLink="{name:'wkpos.product.print',params: { id: item.id, barcode: item.extensions.wkpos_barcode[0].barcode }}">
+                                            {{ $tc('wkpos-product.list.printButtonText') }}
+                                        </sw-context-menu-item>
+                                    {% endblock %}
+                                </template>
+                            {% endblock %}
+                        </sw-entity-listing>
+                    {% endblock %}
+                </div>
+            {% endblock %}
+        </template>
+
+        {# {% block wkpos_product_list_sidebar %}
+            <template #sidebar>
+                <sw-sidebar>
+                    {% block wkpos_product_list_sidebar_refresh %}
+                        <sw-sidebar-item
+                            icon="default-arrow-360-left"
+                            :title="$tc('sw-product.list.titleSidebarItemRefresh')"
+                            @click="onRefresh">
+                        </sw-sidebar-item>
+                    {% endblock %}
+                </sw-sidebar>
+            </template>
+        {% endblock %} #}
+    </sw-page>
+{% endblock %}

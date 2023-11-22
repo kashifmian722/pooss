@@ -1,0 +1,37 @@
+{
+    "wkpos-product": {
+        "general": {
+            "mainMenuItemGeneral": "POS Product",
+            "descriptionTextModule": "Manage POS Product Here",
+            "massPrintButtonText": "Mass Print Barcode",
+            "massGenereateButtonText": "Mass Generate Barcode"
+        },
+        "list": {
+            "columnImage": "Product Image",
+            "columnName": "Product Name",
+            "columnBarcode": "Barcode",
+            "columnPrice": "Price",
+            "columnStock": "Stock",
+            "columnOutlet": "--Outlet--",
+            "columnAssignedStock": "Assign Stock",
+            "columnAction": "Action",
+            "printButtonText": "Print Barcode",
+            "assignButtonText": "Assign",
+            "contextMenuView": "View",
+            "generateButtonText": "Generate Barcode",
+            "regenerateButtonText": "Regenerate Barcode",
+            "modalTitle": "Assign products to Outlet",
+            "titleSaveSuccess": "Success",
+            "textSelectOutlet": "Outlet",
+            "placeholderAssignStock": "Enter quantity to assign",
+            "titleSaveError": "Error",
+            "messageSelectProduct": "Select at least one product to assign",
+            "messageSelectOutlet": "Select an outlet",
+            "messageSaveError": "Could not assign the products to outlet",
+            "messageAssignSuccess": "\"{count}\" products have been assigned to outlet",
+            "messageSaveSuccess": "Product \"{name}\" has been assigned to outlet",
+            "messageLowStock": "Product \"{name}\" has not enoungh available stock",
+            "messageBarcodeGenerate": "Barcode Generated Successfully"
+        }
+    }
+}

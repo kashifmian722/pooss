@@ -1,0 +1,116 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="WebkulPOS\Core\Content\Outlet\Aggregate\OutletProduct\OutletProductDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_product"/>
+        </service>
+
+        <service id="WebkulPOS\Core\Content\Order\WkposOrderDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_order"/>
+        </service>
+        <service id="WebkulPOS\Core\Content\Barcode\BarcodeDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_barcode"/>
+        </service>
+        <service id="WebkulPOS\Core\Content\DefaultCustomer\DefaultCustomerDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_default_customer"/>
+        </service>
+        <service id="WebkulPOS\Core\Content\Product\ProductExtension">
+           <tag name="shopware.entity.extension"/>
+        </service>
+
+        <service id="WebkulPOS\Core\Content\User\Service\UserService">
+            <argument type="service" id="wkpos_user.repository"/>
+            <argument type="service" id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextPersister"/>
+            <argument type="service" id="Shopware\Core\Framework\Validation\DataValidator"/>
+            <argument type="service" id="WebkulPOS\Core\Content\User\Password\LegacyPasswordVerifier"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+        </service>
+
+        <service id="WebkulPOS\Storefront\Controller\CustomerController">
+            <tag name="controller.service_arguments" />
+            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute"/>
+            <argument type="service" id="Shopware\Production\Portal\Services\TemplateMailSender"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="WebkulPOS\Core\Content\User\Password\LegacyPasswordVerifier">
+            <argument type="tagged" tag="shopware.legacy_encoder" />
+        </service>
+
+        <service id="WebkulPOS\Storefront\Controller\WkposController">
+            <tag name="controller.service_arguments" />
+            <argument type="service" id="WebkulPOS\Core\Content\User\Service\UserService"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="WebkulPOS\Storefront\Controller\OrderController">
+            <tag name="controller.service_arguments" />
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_address.repository"/>
+            <argument type="service" id="order_customer.repository"/>
+            <argument type="service" id="order_delivery.repository"/>
+            <argument type="service" id="order_line_item.repository"/>
+            <argument type="service" id="payment_method.repository"/>
+            <argument type="service" id="wkpos_order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="shipping_method.repository"/>
+            <argument type="service" id="product.repository"/>
+          	<argument type="service" id="merchant_order.repository"/>
+            <argument type="service" id="merchant.repository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="WebkulPOS\Storefront\Controller\ProductController">
+            <tag name="controller.service_arguments" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+        <service id="WebkulPOS\Controller\ProductController">
+            <tag name="controller.service_arguments" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+
+        <service id="WebkulPOS\Core\Content\Outlet\OutletDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_outlet"/>
+        </service>
+        <service id="WebkulPOS\Core\Content\Outlet\Aggregate\OutletTranslation\OutletTranslationDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_outlet_translation"/>
+        </service>
+        <service id="WebkulPOS\Core\Content\User\UserDefinition">
+            <tag name="shopware.entity.definition" entity="wkpos_user"/>
+        </service>
+
+        <service id="WebkulPOS\Core\Content\User\Service\UserValidationService">
+            <argument type="service" id="wkpos_user.repository"/>
+        </service>
+
+        <service id="WebkulPOS\Core\Content\User\Api\UserValidationController" public="true">
+            <tag name="controller.service_arguments" />
+            <argument type="service" id="WebkulPOS\Core\Content\User\Service\UserValidationService"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <!-- <service id="WebkulPOS\Snippet\Files\en_GB\SnippetFile_en_GB">
+            <tag name="shopware.snippet.file" priority="100"/>
+        </service>
+        <service id="WebkulPOS\Snippet\Files\de_DE\SnippetFile_de_DE">
+            <tag name="shopware.snippet.file" priority="100"/>
+        </service> -->
+    </services>
+</container>

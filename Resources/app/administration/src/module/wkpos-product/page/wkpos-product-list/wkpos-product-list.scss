@@ -1,0 +1,17 @@
+@import "~scss/variables";
+
+.wkpos-product-list .sw-button--primary,
+.wkpos-product-list .smart-bar__actions,
+.wkpos-product-list .sw-block-field__block {
+    max-height: 40px;
+}
+
+.wkpos-product-list .sw-block-field input,
+.sw-block-field select,
+.sw-block-field textarea {
+    padding: 8px 16px;
+}
+
+.wkpos-product-list__content .bulk-link {
+    display: none !important;
+}

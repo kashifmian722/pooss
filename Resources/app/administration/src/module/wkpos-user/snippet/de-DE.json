@@ -1,0 +1,57 @@
+{
+    "wkpos-user": {
+        "general": {
+            "mainMenuItemGeneral": "POS-Benutzerin",
+            "descriptionTextModule": "POS-Benutzer hier verwalten",
+            "labelUserList": "POS-Benutzer",
+            "userIcon": "default-avatar-multiple"
+        },
+        "list": {
+            "addButtonText": "Nutzer hinzufügen",
+            "columnUsername": "Nutzername",
+            "columnMedia": "Benutzerbild",
+            "columnOutlet": "Auslauf",
+            "columnEmail": "Email",
+            "columnFirstName": "Vorname",
+            "columnLastName": "Nachname",
+            "columnActive": "Aktiver Status",
+            "messageEmpty": "Noch kein Benutzer hinzugefügt!"
+        },
+        "detail": {
+            "labelUsername": "Nutzername",
+            "labelOutlet": "Auslauf",
+            "labelFirstName": "Vorname",
+            "labelLastName": "Nachname",
+            "labelEmail": "Email",
+            "labelActive": "Aktiver Status",
+            "labelPassword": "Passwort",
+            "labelNewPassword": "Neues Kennwort",
+            "labelChangePassword": "Passwort ändern",
+            "labelProfilePicture": "Profilbild",
+            "labelUseAsAvatar": "Benutzerbild",
+            "labelButtonCancel": "Stornieren",
+            "labelButtonChangePassword": "Veränderung",
+            "labelUploadAvatar": "Laden Sie einen Avatar hoch",
+            "placeholderUsername": "Geben Sie den Benutzernamen ein",
+            "placeholderFirstName": "Bitte Vornamen eingeben",
+            "placeholderLastName": "Nachnamen eingeben",
+            "placeholderEmail": "Email eingeben",
+            "placeholderPassword": "Passwort eingeben",
+            "placeholderNewPassword": "Neues Passwort eingeben",
+            "contentActive": "Aktiv | Inaktiv",
+            "cancelButtonText": "Stornieren",
+            "saveButtonText": "speichern",
+            "errorTitle": "Error",
+            "errorSaveMessage": "POS-Benutzer konnte nicht gespeichert werden",
+            "activeText": "Aktiv",
+            "inActiveText": "Inaktiv",
+            "titleImageCard": "Profilbild",
+            "userOutletIdError": "Steckdose konnte nicht geladen werden",
+            "errorUsernameUsedMessage": "Nutzername \"{username}\" ist schon besetzt!",
+            "errorEmailUsedMessage": "Email \"{email}\" ist schon besetzt!",
+            "textChangePassword": "Durch Drücken der Änderungstaste wird das Passwort sofort gespeichert.",
+            "textSuccessTitle": "Erfolg",
+            "textSuccessMessage": "Der Benutzer wurde gespeichert"
+        }
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "wkpos-outlet": {
+        "adminMenu": "Point Of Sale",
+        "general": {
+            "mainMenuItemGeneral": "POS Outlet",
+            "descriptionTextModule": "Manage Outlet Here",
+            "labelOutletList": "Outlet",
+            "outlet-icon": "default-building-shop"
+        },
+        "list": {
+            "addButtonText": "Add Outlet",
+            "columnName": "Outlet Name",
+            "columnAddress": "Outlet Address",
+            "columnActive": "Active Status",
+            "messageEmpty": "No outlet added yet!"
+        },
+        "detail": {
+            "tabGeneral": "General",
+            "tabProduct": "Product",
+            "labelName": "Outlet Name",
+            "placeholderName": "Enter Outlet Name",
+            "labelAddress": "Outlet Address",
+            "placeholderAddress": "Enter Outlet Address",
+            "labelCountry": "Outlet Country",
+            "labelZone": "Outlet State/Region",
+            "labelCity": "City",
+            "placeholderCity": "Enter City",
+            "labelZipcode": "Zipcode",
+            "placeholderZipcode": "Enter Zipcode",
+            "labelActive": "Active Status",
+            "contentActive": "Active | Inactive",
+            "cancelButtonText": "Cancel",
+            "saveButtonText": "Save",
+            "errorTitle": "Error saving the outlet",
+            "errorMessage": "Please fill in all required fields",
+            "activeText": "Active",
+            "inActiveText": "Inactive",
+            "outletCountryIdError": "Could not load countries",
+            "textSuccessTitle": "Success",
+            "textSuccessMessage": "The outlet has been saved"
+        },
+        "product": {
+            "columnName": "Name",
+            "columnNumber": "Number",
+            "columnActive": "Active",
+            "columnInStock": "In Stock",
+            "columnAvailableStock": "Available",
+            "columnAssignedStock": "Assign Stock",
+            "columnAction": "POS Status",
+            "textStatusEnabled": "Enabled",
+            "textStatusDisabled": "Disabled"
+        }
+    }
+}
